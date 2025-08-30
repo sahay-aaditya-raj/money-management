@@ -1,6 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import {
+  Select as UISelect,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { formatINR } from "@/lib/format";
 import { useExpenses } from "../expenses-provider";
 
@@ -118,35 +127,41 @@ export default function AddRecordPage() {
             <label htmlFor="category" className="block text-sm font-medium">
               Category
             </label>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              id="category"
-              className="mt-1 select"
-            >
-              {CATEGORIES.map((c) => (
-                <option key={c.value} value={c.value}>
-                  {c.label}
-                </option>
-              ))}
-            </select>
+            <UISelect value={category} onValueChange={setCategory}>
+              <SelectTrigger className="mt-1">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Categories</SelectLabel>
+                  {CATEGORIES.map((c) => (
+                    <SelectItem key={c.value} value={c.value}>
+                      {c.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </UISelect>
           </div>
           <div className="md:col-span-1">
             <label htmlFor="user" className="block text-sm font-medium">
               User
             </label>
-            <select
-              value={user}
-              onChange={(e) => setUser(e.target.value)}
-              id="user"
-              className="mt-1 select"
-            >
-              {USERS.map((u) => (
-                <option key={u.value} value={u.value}>
-                  {u.label}
-                </option>
-              ))}
-            </select>
+            <UISelect value={user} onValueChange={setUser}>
+              <SelectTrigger className="mt-1">
+                <SelectValue placeholder="User" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Users</SelectLabel>
+                  {USERS.map((u) => (
+                    <SelectItem key={u.value} value={u.value}>
+                      {u.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </UISelect>
           </div>
       <div className="md:col-span-1">
             <label htmlFor="note" className="block text-sm font-medium">

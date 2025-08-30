@@ -14,6 +14,15 @@ import {
   YAxis,
 } from "recharts";
 import { useExpenses } from "./expenses-provider";
+import {
+  Select as UISelect,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const COLORS = [
   "#8884d8",
@@ -181,57 +190,56 @@ export default function ReportsPage() {
 
   <section className="card card-body grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
         <div>
-          <label htmlFor="user" className="block text-sm font-medium">
-            User
-          </label>
-          <select
-            id="user"
-            value={selectedUser}
-            onChange={(e) => setSelectedUser(e.target.value)}
-            className="mt-1 select"
-          >
-            <option value="all">All Users</option>
-            <option value="aaditya">Aaditya</option>
-            <option value="archana">Archana</option>
-            <option value="rajesh">Rajesh</option>
-          </select>
+          <label className="block text-sm font-medium">User</label>
+          <UISelect value={selectedUser} onValueChange={setSelectedUser}>
+            <SelectTrigger className="mt-1">
+              <SelectValue placeholder="All Users" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>Users</SelectLabel>
+                <SelectItem value="all">All Users</SelectItem>
+                <SelectItem value="aaditya">Aaditya</SelectItem>
+                <SelectItem value="archana">Archana</SelectItem>
+                <SelectItem value="rajesh">Rajesh</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </UISelect>
         </div>
         <div>
-          <label htmlFor="category" className="block text-sm font-medium">
-            Category
-          </label>
-          <select
-            id="category"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="mt-1 select"
-          >
-            <option value="all">All</option>
-            <option value="basic">Basic</option>
-            <option value="bills">Bills</option>
-            <option value="food">Food</option>
-            <option value="fun/entertainment">Fun/Entertainment</option>
-            <option value="others">Others</option>
-          </select>
+          <label className="block text-sm font-medium">Category</label>
+          <UISelect value={category} onValueChange={setCategory}>
+            <SelectTrigger className="mt-1">
+              <SelectValue placeholder="All" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>Categories</SelectLabel>
+                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="basic">Basic</SelectItem>
+                <SelectItem value="bills">Bills</SelectItem>
+                <SelectItem value="food">Food</SelectItem>
+                <SelectItem value="fun/entertainment">Fun/Entertainment</SelectItem>
+                <SelectItem value="others">Others</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </UISelect>
         </div>
         <div>
-          <label htmlFor="year" className="block text-sm font-medium">
-            Year
-          </label>
-          <select
-            id="year"
-            value={year}
-            onChange={(e) => setYear(Number(e.target.value))}
-            className="mt-1 select"
-          >
-            {(yearsAvail.length ? yearsAvail : [new Date().getFullYear()]).map(
-              (y) => (
-                <option key={y} value={y}>
-                  {y}
-                </option>
-              ),
-            )}
-          </select>
+          <label className="block text-sm font-medium">Year</label>
+          <UISelect value={String(year)} onValueChange={(v) => setYear(Number(v))}>
+            <SelectTrigger className="mt-1">
+              <SelectValue placeholder="Year" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>Years</SelectLabel>
+                {(yearsAvail.length ? yearsAvail : [new Date().getFullYear()]).map((y) => (
+                  <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </UISelect>
         </div>
   <div className="md:col-span-1 md:justify-self-end">
           <button type="button" onClick={() => ensureLoaded(true)} className="btn">

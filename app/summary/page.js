@@ -1,6 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import {
+  Select as UISelect,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { formatINR } from "@/lib/format";
 import { useExpenses } from "../expenses-provider";
 
@@ -170,33 +179,45 @@ export default function SummaryPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
             <div>
               <label className="block text-xs mb-1">User</label>
-              <select
-                className="select"
+              <UISelect
                 value={filters.user}
-                onChange={(e) => setFilters((f) => ({ ...f, user: e.target.value }))}
+                onValueChange={(v) => setFilters((f) => ({ ...f, user: v }))}
               >
-                {USERS.map((u) => (
-                  <option key={u} value={u}>
-                    {u === "all" ? "All" : cap(u)}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger>
+                  <SelectValue placeholder="All" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Users</SelectLabel>
+                    {USERS.map((u) => (
+                      <SelectItem key={u} value={u}>
+                        {u === "all" ? "All" : cap(u)}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </UISelect>
             </div>
             <div>
               <label className="block text-xs mb-1">Category</label>
-              <select
-                className="select"
+              <UISelect
                 value={filters.category}
-                onChange={(e) =>
-                  setFilters((f) => ({ ...f, category: e.target.value }))
-                }
+                onValueChange={(v) => setFilters((f) => ({ ...f, category: v }))}
               >
-                {CATEGORIES.map((c) => (
-                  <option key={c} value={c}>
-                    {c === "fun/entertainment" ? "Entertainment" : c === "all" ? "All" : cap(c)}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger>
+                  <SelectValue placeholder="All" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Categories</SelectLabel>
+                    {CATEGORIES.map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {c === "fun/entertainment" ? "Entertainment" : c === "all" ? "All" : cap(c)}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </UISelect>
             </div>
             <div>
               <label className="block text-xs mb-1">From</label>
@@ -218,28 +239,40 @@ export default function SummaryPage() {
             </div>
             <div>
               <label className="block text-xs mb-1">Sort By</label>
-              <select
-                className="select"
+              <UISelect
                 value={filters.sortBy}
-                onChange={(e) => setFilters((f) => ({ ...f, sortBy: e.target.value }))}
+                onValueChange={(v) => setFilters((f) => ({ ...f, sortBy: v }))}
               >
-                <option value="date">Date</option>
-                <option value="amount">Amount</option>
-                <option value="category">Category</option>
-                <option value="user">User</option>
-                <option value="all">User, Category, Date</option>
-              </select>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="date">Date</SelectItem>
+                    <SelectItem value="amount">Amount</SelectItem>
+                    <SelectItem value="category">Category</SelectItem>
+                    <SelectItem value="user">User</SelectItem>
+                    <SelectItem value="all">User, Category, Date</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </UISelect>
             </div>
             <div>
               <label className="block text-xs mb-1">Direction</label>
-              <select
-                className="select"
+              <UISelect
                 value={filters.sortDir}
-                onChange={(e) => setFilters((f) => ({ ...f, sortDir: e.target.value }))}
+                onValueChange={(v) => setFilters((f) => ({ ...f, sortDir: v }))}
               >
-                <option value="desc">Desc</option>
-                <option value="asc">Asc</option>
-              </select>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="desc">Desc</SelectItem>
+                    <SelectItem value="asc">Asc</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </UISelect>
             </div>
           </div>
         </div>
