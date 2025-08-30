@@ -6,9 +6,6 @@ import {
   Bar,
   BarChart,
   Cell,
-  Legend,
-  Line,
-  LineChart,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -29,13 +26,11 @@ const COLORS = [
 export default function ReportsPage() {
   // Controls
   const [year, setYear] = useState(() => new Date().getFullYear());
-  const [month, setMonth] = useState(() => new Date().getMonth() + 1); // 1-12
-  const [days, setDays] = useState(90); // used only for pie
+  const [days, setDays] = useState(90); // used for pie
   const [selectedUser, setSelectedUser] = useState("all");
   const [category, setCategory] = useState("all");
   const [isMobile, setIsMobile] = useState(false);
   // Data
-  const [tsMonth, setTsMonth] = useState([]); // daily series for selected month
   const [tsYear, setTsYear] = useState([]); // monthly series for selected year
   const [breakdown, setBreakdown] = useState({ byCategory: {}, byUser: {} });
   const [yearsAvail, setYearsAvail] = useState([]);
@@ -47,20 +42,8 @@ export default function ReportsPage() {
     setLoading(true);
     setError("");
     try {
-      // Build month range (local time used; server aggregates on UTC date strings)
-      const monthStart = new Date(year, month - 1, 1);
-      const monthEnd = new Date(year, month, 0, 23, 59, 59, 999);
-
       const yearStart = new Date(year, 0, 1);
       const yearEnd = new Date(year, 11, 31, 23, 59, 59, 999);
-
-      // Time series for the month (daily)
-      const tsMonthQs = new URLSearchParams({ period: "day" });
-      tsMonthQs.set("from", monthStart.toISOString());
-      tsMonthQs.set("to", monthEnd.toISOString());
-      if (selectedUser && selectedUser !== "all")
-        tsMonthQs.set("user", selectedUser);
-      if (category && category !== "all") tsMonthQs.set("category", category);
 
       // Monthly bars for the year (monthly)
       const tsYearQs = new URLSearchParams({ period: "month" });
@@ -77,20 +60,15 @@ export default function ReportsPage() {
         brQs.set("user", selectedUser);
       if (category && category !== "all") brQs.set("category", category);
 
-      const [tsMonthRes, tsYearRes, brRes] = await Promise.all([
-        fetch(`/api/reports/time-series?${tsMonthQs.toString()}`),
+      const [tsYearRes, brRes] = await Promise.all([
         fetch(`/api/reports/time-series?${tsYearQs.toString()}`),
         fetch(`/api/reports/range-breakdown?${brQs.toString()}`),
       ]);
-      const tsMonthJson = await tsMonthRes.json();
       const tsYearJson = await tsYearRes.json();
       const brJson = await brRes.json();
-      if (!tsMonthJson.ok)
-        throw new Error(tsMonthJson.error || "Failed month series");
       if (!tsYearJson.ok)
         throw new Error(tsYearJson.error || "Failed year series");
       if (!brJson.ok) throw new Error(brJson.error || "Failed breakdown");
-      setTsMonth(Array.isArray(tsMonthJson.data) ? tsMonthJson.data : []);
       setTsYear(Array.isArray(tsYearJson.data) ? tsYearJson.data : []);
       setBreakdown({
         byCategory: brJson.byCategory || {},
@@ -101,7 +79,7 @@ export default function ReportsPage() {
     } finally {
       setLoading(false);
     }
-  }, [year, month, days, selectedUser, category]);
+  }, [year, days, selectedUser, category]);
 
   useEffect(() => {
     load();
@@ -182,15 +160,7 @@ export default function ReportsPage() {
     [],
   );
 
-  // Day-of-month for daily time series axis (1..31)
-  const formatDay = useCallback((dateStr) => {
-    if (!dateStr) return "";
-    const d = new Date(dateStr);
-    const istOffset = 5.5 * 60; // minutes
-    const utc = d.getTime() + d.getTimezoneOffset() * 60000;
-    const ist = new Date(utc + istOffset * 60000);
-    return String(ist.getDate());
-  }, []);
+  // removed time series day formatter
 
   // Shorten category labels for charts to avoid clipping
   const CATEGORY_LABELS = useMemo(
@@ -224,13 +194,12 @@ export default function ReportsPage() {
 
   const totals = useMemo(() => {
     const yearTotal = monthlyBars.reduce((s, m) => s + (m.total || 0), 0);
-    const monthTotal = tsMonth.reduce((s, d) => s + (d.total || 0), 0);
     const pieTotal = Object.values(breakdown.byCategory || {}).reduce(
       (s, v) => s + (v || 0),
       0,
     );
-    return { yearTotal, monthTotal, pieTotal };
-  }, [monthlyBars, tsMonth, breakdown]);
+    return { yearTotal, pieTotal };
+  }, [monthlyBars, breakdown]);
 
   return (
     <div className="mx-auto max-w-6xl p-6 space-y-8">
@@ -241,7 +210,7 @@ export default function ReportsPage() {
         </p>
       </header>
 
-      <section className="card card-body grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
+  <section className="card card-body grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
         <div>
           <label htmlFor="user" className="block text-sm font-medium">
             User
@@ -295,37 +264,7 @@ export default function ReportsPage() {
             )}
           </select>
         </div>
-        <div>
-          <label htmlFor="month" className="block text-sm font-medium">
-            Month
-          </label>
-          <select
-            id="month"
-            value={month}
-            onChange={(e) => setMonth(Number(e.target.value))}
-            className="mt-1 select"
-          >
-            {[
-              "Jan",
-              "Feb",
-              "Mar",
-              "Apr",
-              "May",
-              "Jun",
-              "Jul",
-              "Aug",
-              "Sep",
-              "Oct",
-              "Nov",
-              "Dec",
-            ].map((m, idx) => (
-              <option key={m} value={idx + 1}>
-                {m}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="md:col-span-5">
+  <div className="md:col-span-1 md:justify-self-end">
           <button type="button" onClick={load} className="btn">
             Refresh
           </button>
@@ -348,11 +287,18 @@ export default function ReportsPage() {
                 </h2>
                 <div className="text-sm text-gray-600">Total: ₹{formatINR(totals.yearTotal)}</div>
               </div>
-              {monthlyBars && monthlyBars.length ? (
+              {monthlyBars?.length ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={monthlyBars}>
-                    <XAxis dataKey="label" />
-                    <YAxis tickFormatter={(v) => `₹${formatINR(v)}`} />
+                  <BarChart
+                    data={monthlyBars}
+                    margin={{ top: 12, right: 16, bottom: 28, left: 72 }}
+                  >
+                    <XAxis dataKey="label" interval={0} tickMargin={8} />
+                    <YAxis
+                      width={72}
+                      tickMargin={8}
+                      tickFormatter={(v) => `₹${formatINR(v)}`}
+                    />
                     <Tooltip />
                     <Bar dataKey="total" fill="#82ca9d" />
                   </BarChart>
@@ -362,32 +308,7 @@ export default function ReportsPage() {
               )}
             </div>
 
-            <div className="h-64 w-full card card-body">
-              <div className="flex items-center justify-between">
-                <h2 className="mb-2 font-medium">
-                  Time Series (for {MONTHS_ABBR[month - 1]} {year})
-                </h2>
-                <div className="text-sm text-gray-600">Total: ₹{formatINR(totals.monthTotal)}</div>
-              </div>
-              {tsMonth && tsMonth.length ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={tsMonth}>
-                    <XAxis dataKey="period" tickFormatter={(v) => formatDay(v)} />
-                    <YAxis tickFormatter={(v) => `₹${formatINR(v)}`} />
-                    <Tooltip formatter={(value) => `₹${formatINR(value)}`} />
-                    <Legend />
-                    <Line
-                      type="monotone"
-                      dataKey="total"
-                      stroke="#8884d8"
-                      strokeWidth={2}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="text-sm text-gray-500">No data</div>
-              )}
-            </div>
+            {/* Time series removed as requested */}
 
             <div className="w-full card card-body">
               <div className="flex items-center justify-between">
@@ -397,7 +318,7 @@ export default function ReportsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="h-72 w-full">
                   <h3 className="mb-2 text-sm font-medium">By Category</h3>
-                  {pieCategory && pieCategory.length ? (
+                  {pieCategory?.length ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart
                         margin={{ top: 12, right: 16, bottom: 12, left: 16 }}
@@ -430,7 +351,7 @@ export default function ReportsPage() {
                 </div>
                 <div className="h-72 w-full">
                   <h3 className="mb-2 text-sm font-medium">By User</h3>
-                  {pieUser && pieUser.length ? (
+                  {pieUser?.length ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart
                         margin={{ top: 12, right: 16, bottom: 12, left: 16 }}
