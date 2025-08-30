@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { formatINR } from "@/lib/format";
+import { useExpenses } from "../expenses-provider";
 
 const CATEGORIES = [
   { value: "basic", label: "Basic" },
@@ -18,35 +19,15 @@ const USERS = [
 ];
 
 export default function AddRecordPage() {
+  const { items, addExpense, deleteExpense } = useExpenses();
   const [amount, setAmount] = useState(0);
   const [category, setCategory] = useState("basic");
   const [user, setUser] = useState(USERS[0].value);
   const [note, setNote] = useState("");
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [deletingId, setDeletingId] = useState(null);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const res = await fetch("/api/expenses?days=60");
-      const json = await res.json();
-      if (!json.ok) throw new Error(json.error || "Failed to load");
-      setItems(json.items || []);
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
 
   const total = useMemo(
     () => items.reduce((sum, it) => sum + (it.amount || 0), 0),
@@ -86,18 +67,11 @@ export default function AddRecordPage() {
     setSubmitting(true);
     setError("");
     try {
-      const payload = { amount: Number(amount), category, user, note, date };
-      const res = await fetch("/api/expenses", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const json = await res.json();
-      if (!res.ok || !json.ok) throw new Error(json.error || "Failed to add");
+  const payload = { amount: Number(amount), category, user, note, date };
+  await addExpense(payload);
       setAmount(0);
       setNote("");
       setDate(new Date().toISOString().slice(0, 10));
-      await load();
     } catch (e) {
       setError(e.message);
     } finally {
@@ -106,17 +80,11 @@ export default function AddRecordPage() {
   }
 
   async function onDelete(id) {
-    const prev = items;
     setDeletingId(id);
-    setItems((curr) => curr.filter((it) => it._id !== id));
     try {
-      const res = await fetch(`/api/expenses?id=${encodeURIComponent(id)}`, {
-        method: "DELETE",
-      });
-      const json = await res.json();
-      if (!json.ok) throw new Error(json.error || "Failed to delete");
+      const res = await deleteExpense(id);
+      if (!res.ok) throw new Error(res.error || "Failed to delete");
     } catch (e) {
-      setItems(prev);
       setError(e.message);
     } finally {
       setDeletingId(null);
@@ -131,7 +99,7 @@ export default function AddRecordPage() {
       </header>
 
       <form onSubmit={onSubmit} className="card">
-        <div className="card-body grid grid-cols-1 md:grid-cols-6 gap-3 items-end">
+        <div className="card-body grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
           <div className="md:col-span-1">
             <label htmlFor="amount" className="block text-sm font-medium">
               Amount
@@ -180,7 +148,7 @@ export default function AddRecordPage() {
               ))}
             </select>
           </div>
-          <div className="md:col-span-2">
+      <div className="md:col-span-1">
             <label htmlFor="note" className="block text-sm font-medium">
               Note
             </label>
@@ -193,7 +161,7 @@ export default function AddRecordPage() {
               className="mt-1 input"
             />
           </div>
-          <div className="md:col-span-1">
+      <div className="md:col-span-1">
             <label htmlFor="date" className="block text-sm font-medium">
               Date
             </label>
@@ -202,10 +170,10 @@ export default function AddRecordPage() {
               value={date}
               onChange={(e) => setDate(e.target.value)}
               id="date"
-              className="mt-1 input"
+        className="mt-1 input min-w-[11rem]"
             />
           </div>
-          <div className="md:col-span-1">
+      <div className="md:col-span-1">
             <button disabled={submitting} type="submit" className="w-full btn">
               {submitting ? "Adding..." : "Add"}
             </button>
@@ -224,13 +192,19 @@ export default function AddRecordPage() {
           <h2 className="text-lg font-medium">Recent Expenses (60 days)</h2>
           <div className="text-sm text-gray-600">Total: ₹{formatINR(total)}</div>
         </div>
-        {loading ? (
-          <div>Loading…</div>
-        ) : items.length === 0 ? (
+        {items.length === 0 ? (
           <div className="text-gray-500">No expenses yet</div>
         ) : (
           <ul className="divide-y rounded border card">
-            {items.map((it, idx) => (
+            {items
+              .filter((it) => {
+                // show recent 60 days like before
+                const d = new Date(it.date);
+                const f = new Date();
+                f.setDate(f.getDate() - 60);
+                return d >= f;
+              })
+              .map((it, idx) => (
               <li
                 key={it._id || `${it.date}-${idx}`}
                 className="p-3 flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-3"

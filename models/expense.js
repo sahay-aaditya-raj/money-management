@@ -30,7 +30,7 @@ const Expense =
 export default Expense;
 
 export async function listExpenses({
-  limit = 100,
+  limit,
   days,
   user,
   category,
@@ -64,7 +64,9 @@ export async function listExpenses({
     const field = allowed.includes(sortBy) ? sortBy : "date";
     sort = { [field]: dir };
   }
-  const docs = await Expense.find(match).sort(sort).limit(limit).lean();
+  let q = Expense.find(match).sort(sort);
+  if (Number.isFinite(limit) && limit > 0) q = q.limit(Number(limit));
+  const docs = await q.lean();
   return docs.map((d) => ({ ...d, _id: d._id?.toString?.() }));
 }
 

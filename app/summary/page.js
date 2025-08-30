@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { formatINR } from "@/lib/format";
+import { useExpenses } from "../expenses-provider";
 
 const USERS = ["all", "aaditya", "archana", "rajesh"];
 const CATEGORIES = [
@@ -36,6 +37,7 @@ function fmtDateTime(d) {
 }
 
 export default function SummaryPage() {
+  const { items: allItems, deleteExpense } = useExpenses();
   const [filters, setFilters] = useState({
     user: "all",
     category: "all",
@@ -45,7 +47,6 @@ export default function SummaryPage() {
     sortDir: "desc",
     limit: 120,
   });
-  const [loading, setLoading] = useState(false);
   const [items, setItems] = useState([]);
   const [deletingId, setDeletingId] = useState(null);
   const [printTime, setPrintTime] = useState(null);
@@ -64,20 +65,48 @@ export default function SummaryPage() {
   }, [filters]);
 
   useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      try {
-        const res = await fetch(`/api/expenses?${query}`, { cache: "no-store" });
-        const json = await res.json();
-        if (json.ok) setItems(json.items ?? []);
-      } catch (e) {
-        console.error("summary load", e);
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, [query]);
+    // filter locally from cache
+    let list = allItems.slice();
+    if (filters.user && filters.user !== "all") {
+      list = list.filter((x) => x.user === filters.user);
+    }
+    if (filters.category && filters.category !== "all") {
+      list = list.filter((x) => x.category === filters.category);
+    }
+    if (filters.from) {
+      const f = new Date(filters.from);
+      list = list.filter((x) => new Date(x.date) >= f);
+    }
+    if (filters.to) {
+      const t = new Date(filters.to);
+      // include whole day
+      t.setHours(23, 59, 59, 999);
+      list = list.filter((x) => new Date(x.date) <= t);
+    }
+    const dir = filters.sortDir === "asc" ? 1 : -1;
+    if (filters.sortBy === "all") {
+      list.sort((a, b) =>
+        dir * (
+          (a.user || "").localeCompare(b.user || "") ||
+          (a.category || "").localeCompare(b.category || "") ||
+          new Date(a.date) - new Date(b.date)
+        ),
+      );
+    } else if (filters.sortBy === "amount") {
+      list.sort((a, b) => dir * (Number(a.amount || 0) - Number(b.amount || 0)));
+    } else if (filters.sortBy === "category") {
+      list.sort((a, b) => dir * (a.category || "").localeCompare(b.category || ""));
+    } else if (filters.sortBy === "user") {
+      list.sort((a, b) => dir * (a.user || "").localeCompare(b.user || ""));
+    } else {
+      // date
+      list.sort((a, b) => dir * (new Date(a.date) - new Date(b.date)));
+    }
+    if (filters.limit && Number.isFinite(filters.limit)) {
+      list = list.slice(0, filters.limit);
+    }
+    setItems(list);
+  }, [allItems, query]);
 
   // Capture the exact timestamp when user initiates print or when print dialog opens
   useEffect(() => {
@@ -99,18 +128,12 @@ export default function SummaryPage() {
 
   const onDelete = async (id) => {
     if (!id) return;
-    const prev = items;
     setDeletingId(id);
-    setItems((cur) => cur.filter((x) => x._id !== id));
     try {
-      const res = await fetch(`/api/expenses?id=${encodeURIComponent(id)}`, {
-        method: "DELETE",
-      });
-      const json = await res.json();
-      if (!json.ok) throw new Error(json.error || "Failed to delete");
+      const res = await deleteExpense(id);
+      if (!res.ok) throw new Error(res.error || "Failed to delete");
     } catch (e) {
       console.error(e);
-      setItems(prev);
     } finally {
       setDeletingId(null);
     }
@@ -225,7 +248,7 @@ export default function SummaryPage() {
       <div className="card">
         <div className="card-header">
           <div className="text-sm text-gray-600">
-            {loading ? "Loading…" : `${items.length} records${filters.limit && filters.limit < 999999 ? ` (showing up to ${filters.limit})` : ""}`}
+            {`${items.length} records${filters.limit && filters.limit < 999999 ? ` (showing up to ${filters.limit})` : ""}`}
           </div>
           <div className="text-sm font-medium">Total: ₹{formatINR(total)}</div>
         </div>
@@ -267,7 +290,7 @@ export default function SummaryPage() {
                     </td>
                   </tr>
                 ))}
-                {!items.length && !loading && (
+                {!items.length && (
                   <tr>
                     <td className="p-4 text-center text-gray-500" colSpan={7}>
                       No data
@@ -313,7 +336,7 @@ export default function SummaryPage() {
                 <td className="p-1 align-top" style={{ borderColor: "#000" }}>{it.note || ""}</td>
               </tr>
             ))}
-            {!items.length && !loading && (
+            {!items.length && (
               <tr>
                 <td className="p-2 text-center" colSpan={6}>No data</td>
               </tr>

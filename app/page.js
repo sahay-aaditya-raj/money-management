@@ -13,6 +13,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { useExpenses } from "./expenses-provider";
 
 const COLORS = [
   "#8884d8",
@@ -24,66 +25,21 @@ const COLORS = [
 ];
 
 export default function ReportsPage() {
+  // Prime cache: Load all expenses on first visit to '/'
+  // Other pages will consume cached data from ExpensesProvider
   // Controls
   const [year, setYear] = useState(() => new Date().getFullYear());
   const [days, setDays] = useState(90); // used for pie
   const [selectedUser, setSelectedUser] = useState("all");
   const [category, setCategory] = useState("all");
   const [isMobile, setIsMobile] = useState(false);
-  // Data
-  const [tsYear, setTsYear] = useState([]); // monthly series for selected year
-  const [breakdown, setBreakdown] = useState({ byCategory: {}, byUser: {} });
+  // Data from provider
+  const { items, ensureLoaded, loading: loadingAll, error: loadError } = useExpenses();
   const [yearsAvail, setYearsAvail] = useState([]);
-  // Status
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const yearStart = new Date(year, 0, 1);
-      const yearEnd = new Date(year, 11, 31, 23, 59, 59, 999);
-
-      // Monthly bars for the year (monthly)
-      const tsYearQs = new URLSearchParams({ period: "month" });
-      tsYearQs.set("from", yearStart.toISOString());
-      tsYearQs.set("to", yearEnd.toISOString());
-      if (selectedUser && selectedUser !== "all")
-        tsYearQs.set("user", selectedUser);
-      if (category && category !== "all") tsYearQs.set("category", category);
-
-      // Pie breakdown uses Days Back only
-      const brQs = new URLSearchParams({});
-      if (days) brQs.set("days", String(days));
-      if (selectedUser && selectedUser !== "all")
-        brQs.set("user", selectedUser);
-      if (category && category !== "all") brQs.set("category", category);
-
-      const [tsYearRes, brRes] = await Promise.all([
-        fetch(`/api/reports/time-series?${tsYearQs.toString()}`),
-        fetch(`/api/reports/range-breakdown?${brQs.toString()}`),
-      ]);
-      const tsYearJson = await tsYearRes.json();
-      const brJson = await brRes.json();
-      if (!tsYearJson.ok)
-        throw new Error(tsYearJson.error || "Failed year series");
-      if (!brJson.ok) throw new Error(brJson.error || "Failed breakdown");
-      setTsYear(Array.isArray(tsYearJson.data) ? tsYearJson.data : []);
-      setBreakdown({
-        byCategory: brJson.byCategory || {},
-        byUser: brJson.byUser || {},
-      });
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [year, days, selectedUser, category]);
-
+  // Ensure cache is loaded when landing on '/'
   useEffect(() => {
-    load();
-  }, [load]);
+    ensureLoaded();
+  }, [ensureLoaded]);
 
   // Detect mobile width for responsive chart sizing
   useEffect(() => {
@@ -94,39 +50,43 @@ export default function ReportsPage() {
     return () => window.removeEventListener("resize", update);
   }, []);
 
-  // Load available years when filters change (user/category)
+  // Compute available years locally
   useEffect(() => {
-    const run = async () => {
-      const qs = new URLSearchParams({});
-      if (selectedUser && selectedUser !== "all") qs.set("user", selectedUser);
-      if (category && category !== "all") qs.set("category", category);
-      const res = await fetch(`/api/reports/available-years?${qs.toString()}`);
-      const json = await res.json();
-      if (json.ok) {
-        const years = Array.isArray(json.data) ? json.data : [];
-        setYearsAvail(years);
-        // If current selected year not in list, default to latest
-        if (years.length && !years.includes(year)) {
-          setYear(years[0]);
-        }
-      }
-    };
-    run();
-  }, [selectedUser, category, year]);
+    const filtered = items.filter((it) => {
+      if (selectedUser !== "all" && it.user !== selectedUser) return false;
+      if (category !== "all" && it.category !== category) return false;
+      return true;
+    });
+    const years = Array.from(new Set(filtered.map((it) => new Date(it.date).getFullYear()))).sort((a, b) => b - a);
+    setYearsAvail(years);
+    if (years.length && !years.includes(year)) setYear(years[0]);
+  }, [items, selectedUser, category, year]);
 
-  const pieCategory = useMemo(() => {
-    return Object.entries(breakdown.byCategory || {}).map(([name, value]) => ({
-      name,
-      value,
-    }));
-  }, [breakdown]);
-
-  const pieUser = useMemo(() => {
-    return Object.entries(breakdown.byUser || {}).map(([name, value]) => ({
-      name,
-      value,
-    }));
-  }, [breakdown]);
+  // Compute pie breakdown locally for last `days`
+  const { pieCategory, pieUser, pieTotal } = useMemo(() => {
+    const now = new Date();
+    const from = new Date(now);
+    from.setDate(now.getDate() - Number(days || 0));
+    const filtered = items.filter((it) => {
+      const d = new Date(it.date);
+      if (days && d < from) return false;
+      if (selectedUser !== "all" && it.user !== selectedUser) return false;
+      if (category !== "all" && it.category !== category) return false;
+      return true;
+    });
+    const byCategory = new Map();
+    const byUser = new Map();
+    for (const it of filtered) {
+      const c = it.category || "unknown";
+      byCategory.set(c, (byCategory.get(c) || 0) + Number(it.amount || 0));
+      const u = it.user || "unknown";
+      byUser.set(u, (byUser.get(u) || 0) + Number(it.amount || 0));
+    }
+    const pieCategory = Array.from(byCategory.entries()).map(([name, value]) => ({ name, value }));
+    const pieUser = Array.from(byUser.entries()).map(([name, value]) => ({ name, value }));
+    const pieTotal = pieCategory.reduce((s, x) => s + x.value, 0);
+    return { pieCategory, pieUser, pieTotal };
+  }, [items, days, selectedUser, category]);
 
   // Format date as DD-MM-YYYY in IST (kept for reference if needed elsewhere)
   // function formatDateDMY(dateStr) {
@@ -185,21 +145,30 @@ export default function ReportsPage() {
   }, []);
 
   const monthlyBars = useMemo(() => {
-    const map = new Map(tsYear.map((x) => [x.period, x.total]));
-    return Array.from({ length: 12 }, (_, i) => {
-      const key = `${year}-${String(i + 1).padStart(2, "0")}`;
-      return { period: key, label: MONTHS_ABBR[i], total: map.get(key) || 0 };
+    const monthTotals = Array(12).fill(0);
+    const filtered = items.filter((it) => {
+      const d = new Date(it.date);
+      if (d.getFullYear() !== year) return false;
+      if (selectedUser !== "all" && it.user !== selectedUser) return false;
+      if (category !== "all" && it.category !== category) return false;
+      return true;
     });
-  }, [tsYear, year, MONTHS_ABBR]);
+    for (const it of filtered) {
+      const d = new Date(it.date);
+      const m = d.getMonth();
+      monthTotals[m] += Number(it.amount || 0);
+    }
+    return monthTotals.map((total, i) => ({
+      period: `${year}-${String(i + 1).padStart(2, "0")}`,
+      label: MONTHS_ABBR[i],
+      total,
+    }));
+  }, [items, year, selectedUser, category, MONTHS_ABBR]);
 
   const totals = useMemo(() => {
     const yearTotal = monthlyBars.reduce((s, m) => s + (m.total || 0), 0);
-    const pieTotal = Object.values(breakdown.byCategory || {}).reduce(
-      (s, v) => s + (v || 0),
-      0,
-    );
     return { yearTotal, pieTotal };
-  }, [monthlyBars, breakdown]);
+  }, [monthlyBars, pieTotal]);
 
   return (
     <div className="mx-auto max-w-6xl p-6 space-y-8">
@@ -265,19 +234,19 @@ export default function ReportsPage() {
           </select>
         </div>
   <div className="md:col-span-1 md:justify-self-end">
-          <button type="button" onClick={load} className="btn">
+          <button type="button" onClick={() => ensureLoaded(true)} className="btn">
             Refresh
           </button>
         </div>
       </section>
 
-      {error && (
+    {loadError && (
         <div className="rounded border border-red-200 bg-red-50 p-3 text-red-700">
-          {error}
+      {loadError}
         </div>
       )}
 
-      {loading
+    {loadingAll
         ? <div>Loading…</div>
         : <div className="space-y-8">
             <div className="h-64 w-full card card-body">
