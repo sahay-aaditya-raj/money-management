@@ -6,6 +6,7 @@ import {
   Bar,
   BarChart,
   Cell,
+  Legend,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -23,6 +24,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 
 const COLORS = [
   "#8884d8",
@@ -179,6 +184,19 @@ export default function ReportsPage() {
     return { yearTotal, pieTotal };
   }, [monthlyBars, pieTotal]);
 
+  // Compact number formatter for Y-axis (1K, 2K, etc.)
+  const formatCompact = useCallback((n) => {
+    if (!Number.isFinite(n)) return "";
+    try {
+      return new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }).format(n);
+    } catch (_) {
+      // Fallback
+      if (Math.abs(n) >= 100_000) return `${(n / 100_000).toFixed(1)}L`;
+      if (Math.abs(n) >= 1_000) return `${(n / 1_000).toFixed(0)}K`;
+      return String(n);
+    }
+  }, []);
+
   return (
     <div className="mx-auto max-w-6xl p-6 space-y-8">
       <header className="space-y-2">
@@ -188,65 +206,67 @@ export default function ReportsPage() {
         </p>
       </header>
 
-  <section className="card card-body grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-        <div>
-          <label className="block text-sm font-medium">User</label>
-          <UISelect value={selectedUser} onValueChange={setSelectedUser}>
-            <SelectTrigger className="mt-1">
-              <SelectValue placeholder="All Users" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectLabel>Users</SelectLabel>
-                <SelectItem value="all">All Users</SelectItem>
-                <SelectItem value="aaditya">Aaditya</SelectItem>
-                <SelectItem value="archana">Archana</SelectItem>
-                <SelectItem value="rajesh">Rajesh</SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </UISelect>
-        </div>
-        <div>
-          <label className="block text-sm font-medium">Category</label>
-          <UISelect value={category} onValueChange={setCategory}>
-            <SelectTrigger className="mt-1">
-              <SelectValue placeholder="All" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectLabel>Categories</SelectLabel>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="basic">Basic</SelectItem>
-                <SelectItem value="bills">Bills</SelectItem>
-                <SelectItem value="food">Food</SelectItem>
-                <SelectItem value="fun/entertainment">Fun/Entertainment</SelectItem>
-                <SelectItem value="others">Others</SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </UISelect>
-        </div>
-        <div>
-          <label className="block text-sm font-medium">Year</label>
-          <UISelect value={String(year)} onValueChange={(v) => setYear(Number(v))}>
-            <SelectTrigger className="mt-1">
-              <SelectValue placeholder="Year" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectLabel>Years</SelectLabel>
-                {(yearsAvail.length ? yearsAvail : [new Date().getFullYear()]).map((y) => (
-                  <SelectItem key={y} value={String(y)}>{y}</SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </UISelect>
-        </div>
-  <div className="md:col-span-1 md:justify-self-end">
-          <button type="button" onClick={() => ensureLoaded(true)} className="btn">
-            Refresh
-          </button>
-        </div>
-      </section>
+      <Card>
+        <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end ">
+          <div>
+            <Label className="block text-sm font-medium">User</Label>
+            <UISelect value={selectedUser} onValueChange={setSelectedUser}>
+              <SelectTrigger className="mt-1 w-full">
+                <SelectValue placeholder="All Users" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Users</SelectLabel>
+                  <SelectItem value="all">All Users</SelectItem>
+                  <SelectItem value="aaditya">Aaditya</SelectItem>
+                  <SelectItem value="archana">Archana</SelectItem>
+                  <SelectItem value="rajesh">Rajesh</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </UISelect>
+          </div>
+          <div>
+            <Label className="block text-sm font-medium">Category</Label>
+            <UISelect value={category} onValueChange={setCategory}>
+              <SelectTrigger className="mt-1 w-full">
+                <SelectValue placeholder="All" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Categories</SelectLabel>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="basic">Basic</SelectItem>
+                  <SelectItem value="bills">Bills</SelectItem>
+                  <SelectItem value="food">Food</SelectItem>
+                  <SelectItem value="fun/entertainment">Fun/Entertainment</SelectItem>
+                  <SelectItem value="others">Others</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </UISelect>
+          </div>
+          <div>
+            <Label className="block text-sm font-medium">Year</Label>
+            <UISelect value={String(year)} onValueChange={(v) => setYear(Number(v))}>
+              <SelectTrigger className="mt-1 w-full">
+                <SelectValue placeholder="Year" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Years</SelectLabel>
+                  {(yearsAvail.length ? yearsAvail : [new Date().getFullYear()]).map((y) => (
+                    <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </UISelect>
+          </div>
+          <div className="md:col-span-1 md:justify-self-end">
+            <Button type="button" onClick={() => ensureLoaded(true)}>
+              Refresh
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
     {loadError && (
         <div className="rounded border border-red-200 bg-red-50 p-3 text-red-700">
@@ -257,7 +277,8 @@ export default function ReportsPage() {
     {loadingAll
         ? <div>Loading…</div>
         : <div className="space-y-8">
-            <div className="h-64 w-full card card-body">
+            <Card className="h-70 w-full">
+              <CardContent className="h-full pb-6">
               <div className="flex items-center justify-between">
                 <h2 className="mb-2 font-medium">
                   Monthly Bars (Year: {year})
@@ -266,28 +287,47 @@ export default function ReportsPage() {
               </div>
               {monthlyBars?.length ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={monthlyBars}
-                    margin={{ top: 12, right: 16, bottom: 28, left: 72 }}
-                  >
-                    <XAxis dataKey="label" interval={0} tickMargin={8} />
-                    <YAxis
-                      width={72}
-                      tickMargin={8}
-                      tickFormatter={(v) => `₹${formatINR(v)}`}
-                    />
-                    <Tooltip />
-                    <Bar dataKey="total" fill="#82ca9d" />
-                  </BarChart>
+                  {isMobile ? (
+                    <BarChart
+                      data={monthlyBars}
+                      layout="vertical"
+                      margin={{ top: 8, right: 40, bottom: 8, left: 8 }}
+                      barCategoryGap={6}
+                    >
+                      <XAxis
+                        type="number"
+                        domain={[0, 'dataMax']}
+                        allowDecimals={false}
+                        tick={{ fontSize: 10 }}
+                        tickMargin={4}
+                        tickFormatter={(v) => String(formatCompact(v)).toLowerCase()}
+                      />
+                      <YAxis type="category" dataKey="label" width={28} tickMargin={2} tick={{ fontSize: 10 }} />
+                      <Tooltip formatter={(v) => `₹${formatINR(v)}`} />
+                      <Bar dataKey="total" fill="#82ca9d" barSize={16} />
+                    </BarChart>
+                  ) : (
+                    <BarChart
+                      data={monthlyBars}
+                      margin={{ top: 12, right: 12, bottom: 28, left: 16 }}
+                    >
+                      <XAxis dataKey="label" interval={0} tickMargin={8} />
+                      <YAxis width={48} tickMargin={8} tickFormatter={(v) => formatCompact(v)} />
+                      <Tooltip />
+                      <Bar dataKey="total" fill="#82ca9d" />
+                    </BarChart>
+                  )}
                 </ResponsiveContainer>
               ) : (
                 <div className="text-sm text-gray-500">No data</div>
               )}
-            </div>
+              </CardContent>
+            </Card>
 
             {/* Time series removed as requested */}
 
-            <div className="w-full card card-body">
+            <Card className="w-full">
+              <CardContent>
               <div className="flex items-center justify-between">
                 <h2 className="mb-2 font-medium">Breakdown (Pie)</h2>
                 <div className="text-sm text-gray-600">Total: ₹{formatINR(totals.pieTotal)}</div>
@@ -297,17 +337,13 @@ export default function ReportsPage() {
                   <h3 className="mb-2 text-sm font-medium">By Category</h3>
                   {pieCategory?.length ? (
                     <ResponsiveContainer width="100%" height="100%">
-                      <PieChart
-                        margin={{ top: 12, right: 16, bottom: 12, left: 16 }}
-                      >
+                      <PieChart margin={{ top: 12, right: 16, bottom: isMobile ? 0 : 12, left: 16 }}>
                         <Pie
                           data={pieCategory}
                           dataKey="value"
                           nameKey="name"
                           outerRadius={isMobile ? 90 : 110}
-                          label={({ name, percent }) =>
-                            `${formatCategoryName(name)} ${(percent * 100).toFixed(0)}%`
-                          }
+                          label={isMobile ? undefined : (({ name, percent }) => `${formatCategoryName(name)} ${(percent * 100).toFixed(0)}%`)}
                         >
                           {pieCategory.map((entry, index) => (
                             <Cell
@@ -316,6 +352,14 @@ export default function ReportsPage() {
                             />
                           ))}
                         </Pie>
+                        {isMobile && (
+                          <Legend
+                            verticalAlign="bottom"
+                            align="center"
+                            iconType="circle"
+                            formatter={(value) => formatCategoryName(value)}
+                          />
+                        )}
                         <Tooltip formatter={(value, name) => [
                           `₹${formatINR(value)}`,
                           formatCategoryName(name),
@@ -330,17 +374,13 @@ export default function ReportsPage() {
                   <h3 className="mb-2 text-sm font-medium">By User</h3>
                   {pieUser?.length ? (
                     <ResponsiveContainer width="100%" height="100%">
-                      <PieChart
-                        margin={{ top: 12, right: 16, bottom: 12, left: 16 }}
-                      >
+                      <PieChart margin={{ top: 12, right: 16, bottom: isMobile ? 0 : 12, left: 16 }}>
                         <Pie
                           data={pieUser}
                           dataKey="value"
                           nameKey="name"
                           outerRadius={isMobile ? 90 : 110}
-                          label={({ name, percent }) =>
-                            `${formatUserName(name)} ${(percent * 100).toFixed(0)}%`
-                          }
+                          label={isMobile ? undefined : (({ name, percent }) => `${formatUserName(name)} ${(percent * 100).toFixed(0)}%`)}
                         >
                           {pieUser.map((entry, index) => (
                             <Cell
@@ -349,6 +389,14 @@ export default function ReportsPage() {
                             />
                           ))}
                         </Pie>
+                        {isMobile && (
+                          <Legend
+                            verticalAlign="bottom"
+                            align="center"
+                            iconType="circle"
+                            formatter={(value) => formatUserName(value)}
+                          />
+                        )}
                         <Tooltip formatter={(value, name) => [
                           `₹${formatINR(value)}`,
                           formatUserName(name),
@@ -360,19 +408,20 @@ export default function ReportsPage() {
                   )}
                 </div>
               </div>
-              <div className="mt-4">
-                <label htmlFor="daysPie" className="block text-sm font-medium">
+              <div className="mt-8">
+                <Label htmlFor="daysPie" className="block text-sm font-medium">
                   Days Back (Pie)
-                </label>
-                <input
+                </Label>
+                <Input
                   id="daysPie"
                   type="number"
                   value={days}
                   onChange={(e) => setDays(Number(e.target.value))}
-                  className="mt-1 input"
+                  className="mt-1 max-w-40"
                 />
               </div>
-            </div>
+              </CardContent>
+            </Card>
           </div>}
     </div>
   );

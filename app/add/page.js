@@ -10,6 +10,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { DatePicker } from "@/components/ui/date-picker";
 import { formatINR } from "@/lib/format";
 import { useExpenses } from "../expenses-provider";
 
@@ -107,28 +112,29 @@ export default function AddRecordPage() {
         <p className="text-sm text-gray-500">Create a new expense entry.</p>
       </header>
 
-      <form onSubmit={onSubmit} className="card">
-        <div className="card-body grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+      <Card asChild>
+        <form onSubmit={onSubmit}>
+        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
           <div className="md:col-span-1">
-            <label htmlFor="amount" className="block text-sm font-medium">
+            <Label htmlFor="amount" className="block text-sm font-medium">
               Amount
-            </label>
-            <input
+            </Label>
+            <Input
               type="number"
               step="0.01"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               id="amount"
-              className="mt-1 input"
+              className="mt-1"
               required
             />
           </div>
           <div className="md:col-span-1">
-            <label htmlFor="category" className="block text-sm font-medium">
+            <Label htmlFor="category" className="block text-sm font-medium">
               Category
-            </label>
+            </Label>
             <UISelect value={category} onValueChange={setCategory}>
-              <SelectTrigger className="mt-1">
+              <SelectTrigger className="mt-1 w-full">
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
@@ -144,11 +150,11 @@ export default function AddRecordPage() {
             </UISelect>
           </div>
           <div className="md:col-span-1">
-            <label htmlFor="user" className="block text-sm font-medium">
+            <Label htmlFor="user" className="block text-sm font-medium">
               User
-            </label>
+            </Label>
             <UISelect value={user} onValueChange={setUser}>
-              <SelectTrigger className="mt-1">
+              <SelectTrigger className="mt-1 w-full">
                 <SelectValue placeholder="User" />
               </SelectTrigger>
               <SelectContent>
@@ -164,37 +170,37 @@ export default function AddRecordPage() {
             </UISelect>
           </div>
       <div className="md:col-span-1">
-            <label htmlFor="note" className="block text-sm font-medium">
+            <Label htmlFor="note" className="block text-sm font-medium">
               Note
-            </label>
-            <input
+            </Label>
+            <Input
               type="text"
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="Optional description"
               id="note"
-              className="mt-1 input"
+              className="mt-1"
             />
           </div>
       <div className="md:col-span-1">
-            <label htmlFor="date" className="block text-sm font-medium">
+            <Label htmlFor="date" className="block text-sm font-medium">
               Date
-            </label>
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
+            </Label>
+            <DatePicker
               id="date"
-        className="mt-1 input min-w-[11rem]"
+              value={date}
+              onChange={setDate}
+              className="mt-1 min-w-[11rem]"
             />
           </div>
       <div className="md:col-span-1">
-            <button disabled={submitting} type="submit" className="w-full btn">
+            <Button disabled={submitting} type="submit" className="w-full">
               {submitting ? "Adding..." : "Add"}
-            </button>
+            </Button>
           </div>
-        </div>
-      </form>
+        </CardContent>
+        </form>
+      </Card>
 
       {error && (
         <div className="rounded border border-red-200 bg-red-50 p-3 text-red-700">
@@ -210,7 +216,7 @@ export default function AddRecordPage() {
         {items.length === 0 ? (
           <div className="text-gray-500">No expenses yet</div>
         ) : (
-          <ul className="divide-y rounded border card">
+          <ul className="divide-y rounded border bg-card">
             {items
               .filter((it) => {
                 // show recent 60 days like before
@@ -237,15 +243,15 @@ export default function AddRecordPage() {
                     {it.date ? formatDateShort(it.date) : ""}
                   </div>
                   {it._id && (
-                    <button
+                    <Button
                       type="button"
                       onClick={() => onDelete(it._id)}
-                      className="btn cursor-pointer"
+                      className="cursor-pointer"
                       disabled={deletingId === it._id}
                       title="Delete"
                     >
                       {deletingId === it._id ? "Deleting..." : "Delete"}
-                    </button>
+                    </Button>
                   )}
                 </div>
               </li>

@@ -10,6 +10,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DatePicker } from "@/components/ui/date-picker";
 import { formatINR } from "@/lib/format";
 import { useExpenses } from "../expenses-provider";
 
@@ -151,39 +157,38 @@ export default function SummaryPage() {
   return (
     <main className="mx-auto max-w-6xl p-4 space-y-4 print:p-0">
       <div className="app-screen">
-      <div className="card print-hidden">
-        <div className="card-header">
+      <Card className="print-hidden mb-6">
+        <CardHeader className="flex flex-row items-center justify-between gap-2 border-b pb-4">
           <h1 className="text-lg font-semibold tracking-tight">Summary</h1>
           <div className="flex items-center gap-2">
-            <button
-              className="btn-secondary"
+            <Button
+              variant="outline"
               onClick={() => {
                 setPrintTime(new Date());
                 window.print();
               }}
             >
               Print / PDF
-            </button>
+            </Button>
             {filters.limit < 999999 && (
-              <button
-                className="btn"
+              <Button
                 onClick={() => setFilters((f) => ({ ...f, limit: 999999 }))}
                 title="Load all data"
               >
                 Load all
-              </button>
+              </Button>
             )}
           </div>
-        </div>
-        <div className="card-body">
+        </CardHeader>
+        <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
             <div>
-              <label className="block text-xs mb-1">User</label>
+              <Label className="block text-xs mb-1">User</Label>
               <UISelect
                 value={filters.user}
                 onValueChange={(v) => setFilters((f) => ({ ...f, user: v }))}
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="All" />
                 </SelectTrigger>
                 <SelectContent>
@@ -199,12 +204,12 @@ export default function SummaryPage() {
               </UISelect>
             </div>
             <div>
-              <label className="block text-xs mb-1">Category</label>
+              <Label className="block text-xs mb-1">Category</Label>
               <UISelect
                 value={filters.category}
                 onValueChange={(v) => setFilters((f) => ({ ...f, category: v }))}
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="All" />
                 </SelectTrigger>
                 <SelectContent>
@@ -220,30 +225,28 @@ export default function SummaryPage() {
               </UISelect>
             </div>
             <div>
-              <label className="block text-xs mb-1">From</label>
-              <input
-                type="date"
-                className="input"
+              <Label className="block text-xs mb-1">From</Label>
+              <DatePicker
+                id="from"
                 value={filters.from}
-                onChange={(e) => setFilters((f) => ({ ...f, from: e.target.value }))}
+                onChange={(v) => setFilters((f) => ({ ...f, from: v }))}
               />
             </div>
             <div>
-              <label className="block text-xs mb-1">To</label>
-              <input
-                type="date"
-                className="input"
+              <Label className="block text-xs mb-1">To</Label>
+              <DatePicker
+                id="to"
                 value={filters.to}
-                onChange={(e) => setFilters((f) => ({ ...f, to: e.target.value }))}
+                onChange={(v) => setFilters((f) => ({ ...f, to: v }))}
               />
             </div>
             <div>
-              <label className="block text-xs mb-1">Sort By</label>
+              <Label className="block text-xs mb-1">Sort By</Label>
               <UISelect
                 value={filters.sortBy}
                 onValueChange={(v) => setFilters((f) => ({ ...f, sortBy: v }))}
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -258,12 +261,12 @@ export default function SummaryPage() {
               </UISelect>
             </div>
             <div>
-              <label className="block text-xs mb-1">Direction</label>
+              <Label className="block text-xs mb-1">Direction</Label>
               <UISelect
                 value={filters.sortDir}
                 onValueChange={(v) => setFilters((f) => ({ ...f, sortDir: v }))}
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -275,66 +278,100 @@ export default function SummaryPage() {
               </UISelect>
             </div>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
-      <div className="card">
-        <div className="card-header">
+  <Card>
+        <CardHeader className="flex items-center justify-between gap-2 border-b pb-4">
           <div className="text-sm text-gray-600">
             {`${items.length} records${filters.limit && filters.limit < 999999 ? ` (showing up to ${filters.limit})` : ""}`}
           </div>
           <div className="text-sm font-medium">Total: ₹{formatINR(total)}</div>
-        </div>
-        <div className="card-body">
-          <div className="overflow-auto">
-            <table className="w-full text-sm border-collapse">
-              <thead className="bg-gray-50 print:bg-white">
-                <tr>
-                  <th className="text-left p-2 border-b">S.No</th>
-                  <th className="text-left p-2 border-b">Date</th>
-                  <th className="text-left p-2 border-b">User</th>
-                  <th className="text-left p-2 border-b">Category</th>
-                  <th className="text-right p-2 border-b">Amount</th>
-                  <th className="text-left p-2 border-b">Note</th>
-                  <th className="text-right p-2 border-b print-hidden">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((it, idx) => (
-                  <tr key={it._id} className="odd:bg-white even:bg-gray-50 print:bg-white">
-                    <td className="p-2 align-top">{idx + 1}</td>
-                    <td className="p-2 align-top">{fmtDate(it.date)}</td>
-                    <td className="p-2 align-top">{it.user ? cap(it.user) : "-"}</td>
-                    <td className="p-2 align-top">{it.category === "fun/entertainment" ? "Entertainment" : cap(it.category)}</td>
-                    <td className="p-2 text-right align-top">₹{formatINR(it.amount)}</td>
-                    <td className="p-2 align-top text-gray-600">{it.note || ""}</td>
-                    <td className="p-2 text-right align-top print-hidden">
-                      {it._id && (
-                        <button
-                          type="button"
-                          onClick={() => onDelete(it._id)}
-                          className="btn cursor-pointer"
-                          disabled={deletingId === it._id}
-                          title="Delete"
-                        >
-                          {deletingId === it._id ? "Deleting..." : "Delete"}
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-                {!items.length && (
-                  <tr>
-                    <td className="p-4 text-center text-gray-500" colSpan={7}>
-                      No data
-                    </td>
-                  </tr>
+        </CardHeader>
+        <CardContent className="">
+          {/* Mobile list */}
+          <div className="grid gap-2 sm:hidden">
+            {items.map((it, idx) => (
+              <div key={it._id || idx} className="rounded-md border p-3 bg-card">
+                <div className="flex items-center justify-between">
+                  <div className="font-medium">₹{formatINR(it.amount)}</div>
+                  <div className="text-xs text-gray-500">{fmtDate(it.date)}</div>
+                </div>
+                <div className="mt-1 text-xs text-gray-600">
+                  {it.category === "fun/entertainment" ? "Entertainment" : cap(it.category)}
+                  {it.user ? ` · ${cap(it.user)}` : ""}
+                  {it.note ? ` · ${it.note}` : ""}
+                </div>
+                {it._id && (
+                  <div className="mt-2 flex justify-end">
+                    <Button
+                      type="button"
+                      onClick={() => onDelete(it._id)}
+                      className="cursor-pointer"
+                      disabled={deletingId === it._id}
+                      size="sm"
+                    >
+                      {deletingId === it._id ? "Deleting..." : "Delete"}
+                    </Button>
+                  </div>
                 )}
-              </tbody>
-            </table>
+              </div>
+            ))}
+            {!items.length && (
+              <div className="text-center text-gray-500 py-4">No data</div>
+            )}
           </div>
-        </div>
-      </div>
+
+          {/* Desktop table */}
+          <div className="hidden sm:block">
+          <Table>
+            <TableHeader className="bg-gray-50 print:bg-white">
+              <TableRow>
+                <TableHead>S.No</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>User</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead className="text-right">Amount</TableHead>
+                <TableHead>Note</TableHead>
+                <TableHead className="text-right print-hidden">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {items.map((it, idx) => (
+                <TableRow key={it._id} className="print:bg-white">
+                  <TableCell className="align-top">{idx + 1}</TableCell>
+                  <TableCell className="align-top">{fmtDate(it.date)}</TableCell>
+                  <TableCell className="align-top">{it.user ? cap(it.user) : "-"}</TableCell>
+                  <TableCell className="align-top">{it.category === "fun/entertainment" ? "Entertainment" : cap(it.category)}</TableCell>
+                  <TableCell className="text-right align-top">₹{formatINR(it.amount)}</TableCell>
+                  <TableCell className="align-top text-gray-600">{it.note || ""}</TableCell>
+                  <TableCell className="text-right align-top print-hidden">
+                    {it._id && (
+                      <Button
+                        type="button"
+                        onClick={() => onDelete(it._id)}
+                        className="cursor-pointer"
+                        disabled={deletingId === it._id}
+                        title="Delete"
+                      >
+                        {deletingId === it._id ? "Deleting..." : "Delete"}
+                      </Button>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+              {!items.length && (
+                <TableRow>
+                  <TableCell className="p-4 text-center text-gray-500" colSpan={7}>
+                    No data
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+          </div>
+        </CardContent>
+      </Card>
       </div>
 
       {/* Dedicated Print Sheet (A4) */}
