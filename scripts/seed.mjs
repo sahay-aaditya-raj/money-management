@@ -3,14 +3,15 @@ import { fileURLToPath } from "node:url";
 import dotenv from "dotenv";
 import { connectToDatabase } from "../lib/db.js";
 import Expense from "../models/expense.js";
+import { USER_VALUES, CATEGORY_VALUES } from "../lib/data.js";
 
 // Load env from .env.local if present
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.join(__dirname, "../.env.local") });
 
-const USERS = ["aaditya", "archana", "rajesh"];
-const CATEGORIES = ["basic", "bills", "food", "fun/entertainment", "others"];
+const USERS = USER_VALUES;
+const CATEGORIES = CATEGORY_VALUES;
 
 function pick(arr) {
   return arr[Math.floor(Math.random() * arr.length)];

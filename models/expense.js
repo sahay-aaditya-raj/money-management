@@ -1,17 +1,18 @@
 import mongoose from "mongoose";
 import { connectToDatabase } from "../lib/db.js";
+import { CATEGORY_VALUES, USER_VALUES } from "../lib/data.js";
 
 const ExpenseSchema = new mongoose.Schema(
   {
     amount: { type: Number, required: true },
     category: {
       type: String,
-      enum: ["basic", "bills", "fun/entertainment", "food", "others", "user"],
+      enum: CATEGORY_VALUES,
       required: true,
     },
     user: {
       type: String,
-      enum: ["rajesh", "archana", "aaditya"],
+      enum: USER_VALUES,
       default: null,
     },
     note: { type: String, default: "" },

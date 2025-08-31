@@ -21,13 +21,24 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
         <ExpensesProvider>
-      <nav className="p-4 border-b bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 sticky top-0 z-10">
+          <nav className="p-4 border-b bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 sticky top-0 z-10">
             <div className="mx-auto max-w-6xl flex items-center gap-6">
-        <a href="/" className="text-sm font-medium hover:opacity-80">Home</a>
-        <a href="/add" className="text-sm text-gray-600 hover:text-black">Add Record</a>
-        <a href="/summary" className="text-sm text-gray-600 hover:text-black">Summary</a>
+              <a href="/" className="text-sm font-medium hover:opacity-80">
+                Home
+              </a>
+              <a href="/add" className="text-sm text-gray-600 hover:text-black">
+                Add Record
+              </a>
+              <a
+                href="/summary"
+                className="text-sm text-gray-600 hover:text-black"
+              >
+                Summary
+              </a>
             </div>
           </nav>
           {children}

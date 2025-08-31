@@ -28,6 +28,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { USERS_WITH_ALL, CATEGORIES_WITH_ALL } from "@/lib/data";
 
 const COLORS = [
   "#8884d8",
@@ -48,7 +49,12 @@ export default function ReportsPage() {
   const [category, setCategory] = useState("all");
   const [isMobile, setIsMobile] = useState(false);
   // Data from provider
-  const { items, ensureLoaded, loading: loadingAll, error: loadError } = useExpenses();
+  const {
+    items,
+    ensureLoaded,
+    loading: loadingAll,
+    error: loadError,
+  } = useExpenses();
   const [yearsAvail, setYearsAvail] = useState([]);
   // Ensure cache is loaded when landing on '/'
   useEffect(() => {
@@ -71,7 +77,9 @@ export default function ReportsPage() {
       if (category !== "all" && it.category !== category) return false;
       return true;
     });
-    const years = Array.from(new Set(filtered.map((it) => new Date(it.date).getFullYear()))).sort((a, b) => b - a);
+    const years = Array.from(
+      new Set(filtered.map((it) => new Date(it.date).getFullYear())),
+    ).sort((a, b) => b - a);
     setYearsAvail(years);
     if (years.length && !years.includes(year)) setYear(years[0]);
   }, [items, selectedUser, category, year]);
@@ -96,8 +104,13 @@ export default function ReportsPage() {
       const u = it.user || "unknown";
       byUser.set(u, (byUser.get(u) || 0) + Number(it.amount || 0));
     }
-    const pieCategory = Array.from(byCategory.entries()).map(([name, value]) => ({ name, value }));
-    const pieUser = Array.from(byUser.entries()).map(([name, value]) => ({ name, value }));
+    const pieCategory = Array.from(byCategory.entries()).map(
+      ([name, value]) => ({ name, value }),
+    );
+    const pieUser = Array.from(byUser.entries()).map(([name, value]) => ({
+      name,
+      value,
+    }));
     const pieTotal = pieCategory.reduce((s, x) => s + x.value, 0);
     return { pieCategory, pieUser, pieTotal };
   }, [items, days, selectedUser, category]);
@@ -188,7 +201,10 @@ export default function ReportsPage() {
   const formatCompact = useCallback((n) => {
     if (!Number.isFinite(n)) return "";
     try {
-      return new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }).format(n);
+      return new Intl.NumberFormat("en", {
+        notation: "compact",
+        maximumFractionDigits: 1,
+      }).format(n);
     } catch (_) {
       // Fallback
       if (Math.abs(n) >= 100_000) return `${(n / 100_000).toFixed(1)}L`;
@@ -217,10 +233,11 @@ export default function ReportsPage() {
               <SelectContent>
                 <SelectGroup>
                   <SelectLabel>Users</SelectLabel>
-                  <SelectItem value="all">All Users</SelectItem>
-                  <SelectItem value="aaditya">Aaditya</SelectItem>
-                  <SelectItem value="archana">Archana</SelectItem>
-                  <SelectItem value="rajesh">Rajesh</SelectItem>
+                  {USERS_WITH_ALL.map((user) => (
+                    <SelectItem key={user.value} value={user.value}>
+                      {user.label}
+                    </SelectItem>
+                  ))}
                 </SelectGroup>
               </SelectContent>
             </UISelect>
@@ -234,27 +251,34 @@ export default function ReportsPage() {
               <SelectContent>
                 <SelectGroup>
                   <SelectLabel>Categories</SelectLabel>
-                  <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="basic">Basic</SelectItem>
-                  <SelectItem value="bills">Bills</SelectItem>
-                  <SelectItem value="food">Food</SelectItem>
-                  <SelectItem value="fun/entertainment">Fun/Entertainment</SelectItem>
-                  <SelectItem value="others">Others</SelectItem>
+                  {CATEGORIES_WITH_ALL.map((cat) => (
+                    <SelectItem key={cat.value} value={cat.value}>
+                      {cat.label}
+                    </SelectItem>
+                  ))}
                 </SelectGroup>
               </SelectContent>
             </UISelect>
           </div>
           <div>
             <Label className="block text-sm font-medium">Year</Label>
-            <UISelect value={String(year)} onValueChange={(v) => setYear(Number(v))}>
+            <UISelect
+              value={String(year)}
+              onValueChange={(v) => setYear(Number(v))}
+            >
               <SelectTrigger className="mt-1 w-full">
                 <SelectValue placeholder="Year" />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
                   <SelectLabel>Years</SelectLabel>
-                  {(yearsAvail.length ? yearsAvail : [new Date().getFullYear()]).map((y) => (
-                    <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                  {(yearsAvail.length
+                    ? yearsAvail
+                    : [new Date().getFullYear()]
+                  ).map((y) => (
+                    <SelectItem key={y} value={String(y)}>
+                      {y}
+                    </SelectItem>
                   ))}
                 </SelectGroup>
               </SelectContent>
@@ -268,59 +292,78 @@ export default function ReportsPage() {
         </CardContent>
       </Card>
 
-    {loadError && (
+      {loadError && (
         <div className="rounded border border-red-200 bg-red-50 p-3 text-red-700">
-      {loadError}
+          {loadError}
         </div>
       )}
 
-    {loadingAll
+      {loadingAll
         ? <div>Loading…</div>
         : <div className="space-y-8">
             <Card className="h-70 w-full">
               <CardContent className="h-full pb-6">
-              <div className="flex items-center justify-between">
-                <h2 className="mb-2 font-medium">
-                  Monthly Bars (Year: {year})
-                </h2>
-                <div className="text-sm text-gray-600">Total: ₹{formatINR(totals.yearTotal)}</div>
-              </div>
-              {monthlyBars?.length ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  {isMobile ? (
-                    <BarChart
-                      data={monthlyBars}
-                      layout="vertical"
-                      margin={{ top: 8, right: 40, bottom: 8, left: 8 }}
-                      barCategoryGap={6}
-                    >
-                      <XAxis
-                        type="number"
-                        domain={[0, 'dataMax']}
-                        allowDecimals={false}
-                        tick={{ fontSize: 10 }}
-                        tickMargin={4}
-                        tickFormatter={(v) => String(formatCompact(v)).toLowerCase()}
-                      />
-                      <YAxis type="category" dataKey="label" width={28} tickMargin={2} tick={{ fontSize: 10 }} />
-                      <Tooltip formatter={(v) => `₹${formatINR(v)}`} />
-                      <Bar dataKey="total" fill="#82ca9d" barSize={16} />
-                    </BarChart>
-                  ) : (
-                    <BarChart
-                      data={monthlyBars}
-                      margin={{ top: 12, right: 12, bottom: 28, left: 16 }}
-                    >
-                      <XAxis dataKey="label" interval={0} tickMargin={8} />
-                      <YAxis width={48} tickMargin={8} tickFormatter={(v) => formatCompact(v)} />
-                      <Tooltip />
-                      <Bar dataKey="total" fill="#82ca9d" />
-                    </BarChart>
-                  )}
-                </ResponsiveContainer>
-              ) : (
-                <div className="text-sm text-gray-500">No data</div>
-              )}
+                <div className="flex items-center justify-between">
+                  <h2 className="mb-2 font-medium">
+                    Monthly Bars (Year: {year})
+                  </h2>
+                  <div className="text-sm text-gray-600">
+                    Total: ₹{formatINR(totals.yearTotal)}
+                  </div>
+                </div>
+                {monthlyBars?.length
+                  ? <ResponsiveContainer width="100%" height="100%">
+                      {isMobile
+                        ? <BarChart
+                            data={monthlyBars}
+                            layout="vertical"
+                            margin={{ top: 8, right: 40, bottom: 8, left: 8 }}
+                            barCategoryGap={6}
+                          >
+                            <XAxis
+                              type="number"
+                              domain={[0, "dataMax"]}
+                              allowDecimals={false}
+                              tick={{ fontSize: 10 }}
+                              tickMargin={4}
+                              tickFormatter={(v) =>
+                                String(formatCompact(v)).toLowerCase()
+                              }
+                            />
+                            <YAxis
+                              type="category"
+                              dataKey="label"
+                              width={28}
+                              tickMargin={2}
+                              tick={{ fontSize: 10 }}
+                            />
+                            <Tooltip formatter={(v) => `₹${formatINR(v)}`} />
+                            <Bar dataKey="total" fill="#82ca9d" barSize={16} />
+                          </BarChart>
+                        : <BarChart
+                            data={monthlyBars}
+                            margin={{
+                              top: 12,
+                              right: 12,
+                              bottom: 28,
+                              left: 16,
+                            }}
+                          >
+                            <XAxis
+                              dataKey="label"
+                              interval={0}
+                              tickMargin={8}
+                            />
+                            <YAxis
+                              width={48}
+                              tickMargin={8}
+                              tickFormatter={(v) => formatCompact(v)}
+                            />
+                            <Tooltip />
+                            <Bar dataKey="total" fill="#82ca9d" />
+                          </BarChart>}
+                    </ResponsiveContainer>
+                  : <div className="text-sm text-gray-500">No data</div>}
               </CardContent>
             </Card>
 
@@ -328,98 +371,127 @@ export default function ReportsPage() {
 
             <Card className="w-full">
               <CardContent>
-              <div className="flex items-center justify-between">
-                <h2 className="mb-2 font-medium">Breakdown (Pie)</h2>
-                <div className="text-sm text-gray-600">Total: ₹{formatINR(totals.pieTotal)}</div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="h-72 w-full">
-                  <h3 className="mb-2 text-sm font-medium">By Category</h3>
-                  {pieCategory?.length ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart margin={{ top: 12, right: 16, bottom: isMobile ? 0 : 12, left: 16 }}>
-                        <Pie
-                          data={pieCategory}
-                          dataKey="value"
-                          nameKey="name"
-                          outerRadius={isMobile ? 90 : 110}
-                          label={isMobile ? undefined : (({ name, percent }) => `${formatCategoryName(name)} ${(percent * 100).toFixed(0)}%`)}
-                        >
-                          {pieCategory.map((entry, index) => (
-                            <Cell
-                              key={`cell-cat-${entry.name}`}
-                              fill={COLORS[index % COLORS.length]}
-                            />
-                          ))}
-                        </Pie>
-                        {isMobile && (
-                          <Legend
-                            verticalAlign="bottom"
-                            align="center"
-                            iconType="circle"
-                            formatter={(value) => formatCategoryName(value)}
-                          />
-                        )}
-                        <Tooltip formatter={(value, name) => [
-                          `₹${formatINR(value)}`,
-                          formatCategoryName(name),
-                        ]} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="text-sm text-gray-500">No data</div>
-                  )}
+                <div className="flex items-center justify-between">
+                  <h2 className="mb-2 font-medium">Breakdown (Pie)</h2>
+                  <div className="text-sm text-gray-600">
+                    Total: ₹{formatINR(totals.pieTotal)}
+                  </div>
                 </div>
-                <div className="h-72 w-full">
-                  <h3 className="mb-2 text-sm font-medium">By User</h3>
-                  {pieUser?.length ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart margin={{ top: 12, right: 16, bottom: isMobile ? 0 : 12, left: 16 }}>
-                        <Pie
-                          data={pieUser}
-                          dataKey="value"
-                          nameKey="name"
-                          outerRadius={isMobile ? 90 : 110}
-                          label={isMobile ? undefined : (({ name, percent }) => `${formatUserName(name)} ${(percent * 100).toFixed(0)}%`)}
-                        >
-                          {pieUser.map((entry, index) => (
-                            <Cell
-                              key={`cell-user-${entry.name}`}
-                              fill={COLORS[index % COLORS.length]}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="h-72 w-full">
+                    <h3 className="mb-2 text-sm font-medium">By Category</h3>
+                    {pieCategory?.length
+                      ? <ResponsiveContainer width="100%" height="100%">
+                          <PieChart
+                            margin={{
+                              top: 12,
+                              right: 16,
+                              bottom: isMobile ? 0 : 12,
+                              left: 16,
+                            }}
+                          >
+                            <Pie
+                              data={pieCategory}
+                              dataKey="value"
+                              nameKey="name"
+                              outerRadius={isMobile ? 90 : 110}
+                              label={
+                                isMobile
+                                  ? undefined
+                                  : ({ name, percent }) =>
+                                      `${formatCategoryName(name)} ${(percent * 100).toFixed(0)}%`
+                              }
+                            >
+                              {pieCategory.map((entry, index) => (
+                                <Cell
+                                  key={`cell-cat-${entry.name}`}
+                                  fill={COLORS[index % COLORS.length]}
+                                />
+                              ))}
+                            </Pie>
+                            {isMobile && (
+                              <Legend
+                                verticalAlign="bottom"
+                                align="center"
+                                iconType="circle"
+                                formatter={(value) => formatCategoryName(value)}
+                              />
+                            )}
+                            <Tooltip
+                              formatter={(value, name) => [
+                                `₹${formatINR(value)}`,
+                                formatCategoryName(name),
+                              ]}
                             />
-                          ))}
-                        </Pie>
-                        {isMobile && (
-                          <Legend
-                            verticalAlign="bottom"
-                            align="center"
-                            iconType="circle"
-                            formatter={(value) => formatUserName(value)}
-                          />
-                        )}
-                        <Tooltip formatter={(value, name) => [
-                          `₹${formatINR(value)}`,
-                          formatUserName(name),
-                        ]} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="text-sm text-gray-500">No data</div>
-                  )}
+                          </PieChart>
+                        </ResponsiveContainer>
+                      : <div className="text-sm text-gray-500">No data</div>}
+                  </div>
+                  <div className="h-72 w-full">
+                    <h3 className="mb-2 text-sm font-medium">By User</h3>
+                    {pieUser?.length
+                      ? <ResponsiveContainer width="100%" height="100%">
+                          <PieChart
+                            margin={{
+                              top: 12,
+                              right: 16,
+                              bottom: isMobile ? 0 : 12,
+                              left: 16,
+                            }}
+                          >
+                            <Pie
+                              data={pieUser}
+                              dataKey="value"
+                              nameKey="name"
+                              outerRadius={isMobile ? 90 : 110}
+                              label={
+                                isMobile
+                                  ? undefined
+                                  : ({ name, percent }) =>
+                                      `${formatUserName(name)} ${(percent * 100).toFixed(0)}%`
+                              }
+                            >
+                              {pieUser.map((entry, index) => (
+                                <Cell
+                                  key={`cell-user-${entry.name}`}
+                                  fill={COLORS[index % COLORS.length]}
+                                />
+                              ))}
+                            </Pie>
+                            {isMobile && (
+                              <Legend
+                                verticalAlign="bottom"
+                                align="center"
+                                iconType="circle"
+                                formatter={(value) => formatUserName(value)}
+                              />
+                            )}
+                            <Tooltip
+                              formatter={(value, name) => [
+                                `₹${formatINR(value)}`,
+                                formatUserName(name),
+                              ]}
+                            />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      : <div className="text-sm text-gray-500">No data</div>}
+                  </div>
                 </div>
-              </div>
-              <div className="mt-8">
-                <Label htmlFor="daysPie" className="block text-sm font-medium">
-                  Days Back (Pie)
-                </Label>
-                <Input
-                  id="daysPie"
-                  type="number"
-                  value={days}
-                  onChange={(e) => setDays(Number(e.target.value))}
-                  className="mt-1 max-w-40"
-                />
-              </div>
+                <div className="mt-8">
+                  <Label
+                    htmlFor="daysPie"
+                    className="block text-sm font-medium"
+                  >
+                    Days Back (Pie)
+                  </Label>
+                  <Input
+                    id="daysPie"
+                    type="number"
+                    value={days}
+                    onChange={(e) => setDays(Number(e.target.value))}
+                    className="mt-1 max-w-40"
+                  />
+                </div>
               </CardContent>
             </Card>
           </div>}

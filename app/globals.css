@@ -90,7 +90,9 @@ body {
 
 /* Print helpers */
 @media print {
-  .border-b { border-bottom: 1px solid #e5e7eb !important; }
+  .border-b {
+    border-bottom: 1px solid #e5e7eb !important;
+  }
 }
 
 @theme inline {

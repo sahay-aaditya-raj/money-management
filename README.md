@@ -2,16 +2,12 @@
 
 <div align="center">
   
-![Money Software Logo](./public/logo-placeholder.png)
-
 *A modern, intuitive expense tracking and financial management application*
 
 [![Built with Next.js](https://img.shields.io/badge/Built%20with-Next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)](https://nextjs.org/)
 [![Powered by React](https://img.shields.io/badge/Powered%20by-React-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org/)
 [![MongoDB](https://img.shields.io/badge/Database-MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://mongodb.com/)
 [![Tailwind CSS](https://img.shields.io/badge/Styled%20with-Tailwind%20CSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
-
-[Live Demo](#) | [Features](#-features) | [Installation](#-installation) | [API Documentation](#-api-documentation)
 
 </div>
 
@@ -22,13 +18,17 @@
 <div align="center">
 
 ### Dashboard Overview
-![Dashboard Screenshot](./public/screenshots/dashboard-placeholder.png)
+![Dashboard Screenshot](./public/screenshot/dashboard.png)
 
-### Expense Management
-![Expense Management Screenshot](./public/screenshots/expense-management-placeholder.png)
+### Add Records
+![Expense Management Screenshot](./public/screenshot/newRecords.png)
 
-### Analytics & Reports
-![Analytics Screenshot](./public/screenshots/analytics-placeholder.png)
+### Summary
+![Analytics Screenshot](./public/screenshot/summary.png)
+
+
+### Print Preview
+![Print Preview](./public/screenshot/printprevieww.png)
 
 </div>
 
@@ -40,7 +40,7 @@
 - 🗓️ **Date-based Filtering** - Track expenses by date ranges and time periods
 - 💱 **Currency Support** - Native support for Indian Rupee (INR) formatting
 - 📱 **Responsive Design** - Seamless experience across desktop and mobile devices
-- 🎨 **Modern UI** - Clean, intuitive interface built with Radix UI components
+- 🎨 **Modern UI** - Clean, intuitive interface built with shadcn/ui components
 - 🔍 **Smart Search** - Quickly find expenses with advanced filtering options
 - 📊 **Time Series Analysis** - Track spending trends over time
 - 💾 **Automatic Saving** - Real-time data persistence with MongoDB
@@ -52,7 +52,7 @@
 | Frontend | Backend | Database | Styling | Tools |
 |----------|---------|----------|---------|-------|
 | ![Next.js](https://img.shields.io/badge/Next.js-000000?style=flat&logo=nextdotjs&logoColor=white) | ![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat&logo=nodedotjs&logoColor=white) | ![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=flat&logo=mongodb&logoColor=white) | ![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-06B6D4?style=flat&logo=tailwindcss&logoColor=white) | ![Biome](https://img.shields.io/badge/Biome-60A5FA?style=flat&logo=biome&logoColor=white) |
-| ![React](https://img.shields.io/badge/React-61DAFB?style=flat&logo=react&logoColor=black) | ![API Routes](https://img.shields.io/badge/API%20Routes-000000?style=flat&logo=nextdotjs&logoColor=white) | ![Mongoose](https://img.shields.io/badge/Mongoose-880000?style=flat&logo=mongoose&logoColor=white) | ![Radix UI](https://img.shields.io/badge/Radix%20UI-161618?style=flat&logo=radixui&logoColor=white) | ![Zod](https://img.shields.io/badge/Zod-3E67B1?style=flat&logo=zod&logoColor=white) |
+| ![React](https://img.shields.io/badge/React-61DAFB?style=flat&logo=react&logoColor=black) | ![API Routes](https://img.shields.io/badge/API%20Routes-000000?style=flat&logo=nextdotjs&logoColor=white) | ![Mongoose](https://img.shields.io/badge/Mongoose-880000?style=flat&logo=mongoose&logoColor=white) | ![shadcn/ui](https://img.shields.io/badge/shadcn%2Fui-000000?style=flat&logo=shadcnui&logoColor=white) | ![Zod](https://img.shields.io/badge/Zod-3E67B1?style=flat&logo=zod&logoColor=white) |
 
 </div>
 
@@ -105,7 +105,6 @@
 
 ### Adding Expenses
 
-![Add Expense Flow](./public/screenshots/add-expense-flow.gif)
 
 1. Navigate to the "Add Expense" page
 2. Fill in the expense details (amount, category, description, date)
@@ -113,7 +112,6 @@
 
 ### Viewing Reports
 
-![Reports Overview](./public/screenshots/reports-overview.png)
 
 - **Summary View**: Get a quick overview of your spending
 - **Time Series**: Analyze spending patterns over time
@@ -161,9 +159,57 @@ The application uses Tailwind CSS for styling. You can customize the theme by mo
 - `app/globals.css` - Global styles
 - `components/ui/` - Individual component styles
 
-### Adding New Categories
+### 🏷️ Managing Categories and Users
 
-Expense categories can be customized in the application. The system supports dynamic category management.
+The application uses a centralized data management system for categories and users. All data is managed through the `lib/data.js` file.
+
+#### Adding New Categories
+
+To add new expense categories:
+
+1. Open `lib/data.js`
+2. Add your new category to the `CATEGORIES` array:
+   ```javascript
+   export const CATEGORIES = [
+     { value: "basic", label: "Basic" },
+     { value: "bills", label: "Bills" },
+     { value: "food", label: "Food" },
+     { value: "travel", label: "Travel" }, // ← Add new category here
+     // ... other categories
+   ];
+   ```
+3. Restart your development server
+4. The new category will automatically appear in all dropdowns
+
+#### Adding New Users
+
+To add new users to the system:
+
+1. Open `lib/data.js`
+2. Add your new user to the `USERS` array:
+   ```javascript
+   export const USERS = [
+     { value: "aaditya", label: "Aaditya" },
+     { value: "archana", label: "Archana" },
+     { value: "rajesh", label: "Rajesh" },
+     { value: "newuser", label: "New User" }, // ← Add new user here
+     // ... other users
+   ];
+   ```
+3. Restart your development server
+4. The new user will automatically appear in all user selection dropdowns
+
+#### Data Structure
+
+Each category and user object has:
+- `value`: Used for database storage and internal logic
+- `label`: Displayed in the user interface
+
+The system also provides utility functions:
+- `getCategoryLabel(value)` - Get display label for a category
+- `getUserLabel(value)` - Get display label for a user
+- `isValidCategory(value)` - Check if a category is valid
+- `isValidUser(value)` - Check if a user is valid
 
 ## 📊 Project Structure
 
@@ -181,6 +227,10 @@ money-software/
 ├── 📁 components/           # Reusable components
 │   └── 📁 ui/               # UI components
 ├── 📁 lib/                  # Utility functions
+│   ├── 📄 data.js           # ⭐ Centralized categories and users configuration
+│   ├── 📄 db.js             # Database connection utilities
+│   ├── 📄 format.js         # Data formatting functions
+│   └── 📄 utils.js          # General utility functions
 ├── 📁 models/               # Database models
 ├── 📁 public/               # Static assets
 └── 📁 scripts/              # Build scripts
@@ -210,28 +260,17 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 👨‍💻 Author
 
-**Aaditya Raj Sahay**
+**Aaditya Raj**
 - GitHub: [@sahay-aaditya-raj](https://github.com/sahay-aaditya-raj)
 - LinkedIn: [Connect with me](https://linkedin.com/in/aaditya-raj-sahay)
 
 ## 🙏 Acknowledgments
 
 - Built with [Next.js](https://nextjs.org/) - The React Framework for Production
-- UI Components from [Radix UI](https://www.radix-ui.com/)
+- UI Components from [shadcn/ui](https://ui.shadcn.com/)
 - Charts powered by [Recharts](https://recharts.org/)
 - Icons from [Lucide React](https://lucide.dev/)
 - Database powered by [MongoDB](https://www.mongodb.com/)
-
-## 📈 Roadmap
-
-- [ ] Multi-currency support
-- [ ] Export functionality (PDF, CSV)
-- [ ] Budget planning and alerts
-- [ ] Receipt scanning with OCR
-- [ ] Mobile app development
-- [ ] Bank account integration
-- [ ] Collaborative budgets
-- [ ] Advanced analytics and ML insights
 
 ---
 

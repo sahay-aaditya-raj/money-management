@@ -6,8 +6,8 @@ export async function GET(request) {
   try {
     const url = new URL(request.url);
     const searchParams = url.searchParams;
-  const limitParam = searchParams.get("limit");
-  const limit = limitParam != null ? Number(limitParam) : undefined;
+    const limitParam = searchParams.get("limit");
+    const limit = limitParam != null ? Number(limitParam) : undefined;
     const days = searchParams.get("days");
     const user = searchParams.get("user") || undefined;
     const category = searchParams.get("category") || undefined;
@@ -15,7 +15,16 @@ export async function GET(request) {
     const to = searchParams.get("to") || undefined;
     const sortBy = searchParams.get("sortBy") || undefined;
     const sortDir = searchParams.get("sortDir") || undefined;
-  const items = await listExpenses({ limit, days, user, category, from, to, sortBy, sortDir });
+    const items = await listExpenses({
+      limit,
+      days,
+      user,
+      category,
+      from,
+      to,
+      sortBy,
+      sortDir,
+    });
     return NextResponse.json({ ok: true, items });
   } catch (err) {
     console.error("GET /api/expenses error", err);

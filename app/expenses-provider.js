@@ -1,6 +1,14 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 const ExpensesContext = createContext(null);
 
@@ -35,7 +43,8 @@ export function ExpensesProvider({ children }) {
   // Hydrate from localStorage (no server call)
   useEffect(() => {
     try {
-      const raw = typeof window !== "undefined" && localStorage.getItem(CACHE_KEY);
+      const raw =
+        typeof window !== "undefined" && localStorage.getItem(CACHE_KEY);
       if (raw) {
         const { items: cachedItems } = JSON.parse(raw);
         if (Array.isArray(cachedItems)) {
@@ -59,26 +68,33 @@ export function ExpensesProvider({ children }) {
     }
   }, [items]);
 
-  const ensureLoaded = useCallback(async (force = false) => {
-    if (loading) return;
-    if (!force && (loadedFromServerRef.current || loaded)) return;
-    setLoading(true);
-    setError("");
-    try {
-      const params = new URLSearchParams({ sortBy: "date", sortDir: "desc" });
-      const res = await fetch(`/api/expenses?${params.toString()}`, { cache: "no-store" });
-      const json = await res.json();
-      if (!json.ok) throw new Error(json.error || "Failed to load expenses");
-      const list = Array.isArray(json.items) ? json.items.slice().sort(sortByDateDesc) : [];
-      setItems(list);
-      setLoaded(true);
-      loadedFromServerRef.current = true;
-    } catch (e) {
-      setError(e.message || String(e));
-    } finally {
-      setLoading(false);
-    }
-  }, [loading, loaded]);
+  const ensureLoaded = useCallback(
+    async (force = false) => {
+      if (loading) return;
+      if (!force && (loadedFromServerRef.current || loaded)) return;
+      setLoading(true);
+      setError("");
+      try {
+        const params = new URLSearchParams({ sortBy: "date", sortDir: "desc" });
+        const res = await fetch(`/api/expenses?${params.toString()}`, {
+          cache: "no-store",
+        });
+        const json = await res.json();
+        if (!json.ok) throw new Error(json.error || "Failed to load expenses");
+        const list = Array.isArray(json.items)
+          ? json.items.slice().sort(sortByDateDesc)
+          : [];
+        setItems(list);
+        setLoaded(true);
+        loadedFromServerRef.current = true;
+      } catch (e) {
+        setError(e.message || String(e));
+      } finally {
+        setLoading(false);
+      }
+    },
+    [loading, loaded],
+  );
 
   const addExpense = useCallback(async (payload) => {
     // payload: { amount:number, category, user, note, date }
@@ -123,19 +139,24 @@ export function ExpensesProvider({ children }) {
     return { ok: true };
   }, []);
 
-  const value = useMemo(() => ({
-    items,
-    loading,
-    loaded,
-    error,
-    ensureLoaded,
-    addExpense,
-    deleteExpense,
-    setItems,
-  }), [items, loading, loaded, error, ensureLoaded, addExpense, deleteExpense]);
+  const value = useMemo(
+    () => ({
+      items,
+      loading,
+      loaded,
+      error,
+      ensureLoaded,
+      addExpense,
+      deleteExpense,
+      setItems,
+    }),
+    [items, loading, loaded, error, ensureLoaded, addExpense, deleteExpense],
+  );
 
   return (
-    <ExpensesContext.Provider value={value}>{children}</ExpensesContext.Provider>
+    <ExpensesContext.Provider value={value}>
+      {children}
+    </ExpensesContext.Provider>
   );
 }
 
