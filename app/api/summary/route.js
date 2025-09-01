@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { summaryTotals } from "@/models/expense";
+import { isAuthorized } from "@/lib/auth";
 
-export async function GET() {
+export async function GET(request) {
   try {
+    if (!isAuthorized(request)) {
+      return NextResponse.json({ ok: true, byCategory: {}, byUser: {} });
+    }
     const { byCategory, byUser } = await summaryTotals();
     return NextResponse.json({ ok: true, byCategory, byUser });
   } catch (err) {

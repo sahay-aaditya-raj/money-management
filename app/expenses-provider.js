@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { authFetch, getToken, toast } from "@/lib/client-auth";
 
 const ExpensesContext = createContext(null);
 
@@ -76,10 +77,16 @@ export function ExpensesProvider({ children }) {
       setError("");
       try {
         const params = new URLSearchParams({ sortBy: "date", sortDir: "desc" });
-        const res = await fetch(`/api/expenses?${params.toString()}`, {
+        const res = await authFetch(`/api/expenses?${params.toString()}`, {
           cache: "no-store",
         });
         const json = await res.json();
+        if (res.status === 401) {
+          setItems([]);
+          setLoaded(true);
+          toast("Please login to view data.");
+          throw new Error("Please login to view data.");
+        }
         if (!json.ok) throw new Error(json.error || "Failed to load expenses");
         const list = Array.isArray(json.items)
           ? json.items.slice().sort(sortByDateDesc)
@@ -97,13 +104,18 @@ export function ExpensesProvider({ children }) {
   );
 
   const addExpense = useCallback(async (payload) => {
+    if (!getToken()) {
+      toast("Please login to add expenses.");
+      throw new Error("Please login to add expenses.");
+    }
     // payload: { amount:number, category, user, note, date }
-    const res = await fetch("/api/expenses", {
+    const res = await authFetch("/api/expenses", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
     const json = await res.json();
+    if (res.status === 401) throw new Error("Please login to add expenses.");
     if (!res.ok || !json.ok) throw new Error(json.error || "Failed to add");
     const item = json.item || { ...payload, _id: json.id };
     setItems((prev) => {
@@ -121,16 +133,25 @@ export function ExpensesProvider({ children }) {
   }, []);
 
   const deleteExpense = useCallback(async (id) => {
+    if (!getToken()) {
+      toast("Please login to delete.");
+      return { ok: false, error: "Please login to delete." };
+    }
     if (!id) return { ok: false };
     let backup;
     setItems((prev) => {
       backup = prev;
       return prev.filter((x) => x._id !== id);
     });
-    const res = await fetch(`/api/expenses?id=${encodeURIComponent(id)}`, {
+    const res = await authFetch(`/api/expenses?id=${encodeURIComponent(id)}`, {
       method: "DELETE",
     });
     const json = await res.json();
+    if (res.status === 401) {
+      setItems(backup || []);
+      toast("Please login to delete.");
+      return { ok: false, error: "Please login to delete." };
+    }
     if (!json.ok) {
       // rollback
       setItems(backup || []);

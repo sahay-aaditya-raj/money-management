@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { timeSeriesSummary } from "@/models/expense";
+import { isAuthorized } from "@/lib/auth";
 
 export async function GET(request) {
   try {
+    if (!isAuthorized(request)) {
+      return NextResponse.json({ ok: true, data: [] });
+    }
     const url = new URL(request.url);
     const period = url.searchParams.get("period") || "month"; // day|week|month
     const days = url.searchParams.get("days");

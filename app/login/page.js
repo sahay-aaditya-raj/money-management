@@ -6,16 +6,17 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { setToken, getToken } from "@/lib/client-auth";
 
-export default function HomeLoginPage() {
+export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // If already logged in, go home
     const t = getToken();
     if (t && typeof window !== "undefined") {
-      window.location.href = "/reports";
+      window.location.href = "/";
     }
   }, []);
 
@@ -32,7 +33,7 @@ export default function HomeLoginPage() {
       const json = await res.json();
       if (!json.ok) throw new Error(json.error || "Login failed");
       setToken(json.token);
-      window.location.href = "/reports";
+      window.location.href = "/";
     } catch (e) {
       setError(e.message || String(e));
     } finally {

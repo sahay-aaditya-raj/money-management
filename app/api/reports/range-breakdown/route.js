@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { rangeBreakdown } from "@/models/expense";
+import { isAuthorized } from "@/lib/auth";
 
 export async function GET(request) {
   try {
+    if (!isAuthorized(request)) {
+      return NextResponse.json({ ok: true, byCategory: {}, byUser: {} });
+    }
     const url = new URL(request.url);
     const from = url.searchParams.get("from");
     const to = url.searchParams.get("to");

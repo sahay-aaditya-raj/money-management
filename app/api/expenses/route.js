@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import { createExpense, deleteExpense, listExpenses } from "@/models/expense";
+import { isAuthorized } from "@/lib/auth";
 
 // GET /api/expenses -> list expenses
 export async function GET(request) {
   try {
+    if (!isAuthorized(request)) {
+      return NextResponse.json({ ok: true, items: [] });
+    }
     const url = new URL(request.url);
     const searchParams = url.searchParams;
     const limitParam = searchParams.get("limit");
@@ -38,6 +42,12 @@ export async function GET(request) {
 // POST /api/expenses -> create expense
 export async function POST(request) {
   try {
+    if (!isAuthorized(request)) {
+      return NextResponse.json(
+        { ok: false, error: "Unauthorized" },
+        { status: 401 },
+      );
+    }
     const body = await request.json();
     const item = await createExpense(body);
     return NextResponse.json({ ok: true, id: item._id, item });
@@ -53,6 +63,12 @@ export async function POST(request) {
 // DELETE /api/expenses?id=<id>
 export async function DELETE(request) {
   try {
+    if (!isAuthorized(request)) {
+      return NextResponse.json(
+        { ok: false, error: "Unauthorized" },
+        { status: 401 },
+      );
+    }
     const url = new URL(request.url);
     const id = url.searchParams.get("id");
     const { deleted } = await deleteExpense(id);

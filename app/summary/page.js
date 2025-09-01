@@ -272,7 +272,6 @@ export default function SummaryPage() {
                       <SelectItem value="amount">Amount</SelectItem>
                       <SelectItem value="category">Category</SelectItem>
                       <SelectItem value="user">User</SelectItem>
-                      <SelectItem value="all">User, Category, Date</SelectItem>
                     </SelectGroup>
                   </SelectContent>
                 </UISelect>

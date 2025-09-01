@@ -1,283 +1,164 @@
-# 💰 Money Software
+# Money Software – Customize data.js and Auth Setup
 
-<div align="center">
-  
-*A modern, intuitive expense tracking and financial management application*
+This guide explains how to customize the app’s static data in `lib/data.js` (categories, users) and how to manage authentication hashes and tokens. It also includes tips for keeping secrets in environment variables for safety.
 
-[![Built with Next.js](https://img.shields.io/badge/Built%20with-Next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)](https://nextjs.org/)
-[![Powered by React](https://img.shields.io/badge/Powered%20by-React-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org/)
-[![MongoDB](https://img.shields.io/badge/Database-MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://mongodb.com/)
-[![Tailwind CSS](https://img.shields.io/badge/Styled%20with-Tailwind%20CSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+## What lives in `lib/data.js`
 
-</div>
+`lib/data.js` centralizes static configuration used by the app:
+- CATEGORIES: list of expense categories (value + label)
+- USERS: list of allowed users (value + label)
+- CATEGORY_VALUES / USER_VALUES: derived lists used for validation
+- HASHED_USERNAMES: bcrypt hashes of allowed usernames
+- HASHED_PASSWORD: bcrypt hash of the shared password
 
----
+The API login validates credentials with bcrypt compares, and the app uses a constant server-side token to authorize requests.
 
-## 📸 Screenshots
+Notes about bcrypt:
+- Each hash generation produces a different string (it’s salted). That’s normal.
+- Login doesn’t require the strings to match; it uses `bcrypt.compare` to verify your input against the stored hashes.
 
-<div align="center">
+## Customize categories
 
-### Dashboard Overview
-![Dashboard Screenshot](./public/screenshot/dashboard.png)
+Edit `lib/data.js` and update the `CATEGORIES` array:
+- value: the key stored in DB
+- label: the display name in the UI
 
-### Add Records
-![Expense Management Screenshot](./public/screenshot/newRecords.png)
+Adding a new category is enough in `CATEGORIES`; `CATEGORY_VALUES` is derived automatically.
 
-### Summary
-![Analytics Screenshot](./public/screenshot/summary.png)
-
-
-### Print Preview
-![Print Preview](./public/screenshot/printprevieww.png)
-
-</div>
-
-## ✨ Features
-
-- 📊 **Interactive Dashboard** - Beautiful charts and visualizations powered by Recharts
-- 💳 **Expense Tracking** - Add, edit, and categorize your expenses with ease
-- 📈 **Financial Analytics** - Comprehensive reports and insights into your spending patterns
-- 🗓️ **Date-based Filtering** - Track expenses by date ranges and time periods
-- 💱 **Currency Support** - Native support for Indian Rupee (INR) formatting
-- 📱 **Responsive Design** - Seamless experience across desktop and mobile devices
-- 🎨 **Modern UI** - Clean, intuitive interface built with shadcn/ui components
-- 🔍 **Smart Search** - Quickly find expenses with advanced filtering options
-- 📊 **Time Series Analysis** - Track spending trends over time
-- 💾 **Automatic Saving** - Real-time data persistence with MongoDB
-
-## 🛠️ Tech Stack
-
-<div align="center">
-
-| Frontend | Backend | Database | Styling | Tools |
-|----------|---------|----------|---------|-------|
-| ![Next.js](https://img.shields.io/badge/Next.js-000000?style=flat&logo=nextdotjs&logoColor=white) | ![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat&logo=nodedotjs&logoColor=white) | ![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=flat&logo=mongodb&logoColor=white) | ![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-06B6D4?style=flat&logo=tailwindcss&logoColor=white) | ![Biome](https://img.shields.io/badge/Biome-60A5FA?style=flat&logo=biome&logoColor=white) |
-| ![React](https://img.shields.io/badge/React-61DAFB?style=flat&logo=react&logoColor=black) | ![API Routes](https://img.shields.io/badge/API%20Routes-000000?style=flat&logo=nextdotjs&logoColor=white) | ![Mongoose](https://img.shields.io/badge/Mongoose-880000?style=flat&logo=mongoose&logoColor=white) | ![shadcn/ui](https://img.shields.io/badge/shadcn%2Fui-000000?style=flat&logo=shadcnui&logoColor=white) | ![Zod](https://img.shields.io/badge/Zod-3E67B1?style=flat&logo=zod&logoColor=white) |
-
-</div>
-
-## 🚀 Installation
-
-### Prerequisites
-
-- Node.js 18+ installed on your machine
-- MongoDB database (local or cloud)
-- Git for version control
-
-### Quick Start
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/sahay-aaditya-raj/money-software.git
-   cd money-software
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Set up environment variables**
-   ```bash
-   cp .env.example .env.local
-   ```
-   
-   Update the `.env.local` file with your MongoDB connection string:
-   ```env
-   MONGODB_URI=your_mongodb_connection_string
-   ```
-
-4. **Seed the database (optional)**
-   ```bash
-   npm run seed
-   ```
-
-5. **Start the development server**
-   ```bash
-   npm run dev
-   ```
-
-6. **Open your browser**
-   
-   Navigate to [http://localhost:3000](http://localhost:3000) to see the application in action!
-
-## 📖 Usage
-
-### Adding Expenses
-
-
-1. Navigate to the "Add Expense" page
-2. Fill in the expense details (amount, category, description, date)
-3. Click "Save" to record your expense
-
-### Viewing Reports
-
-
-- **Summary View**: Get a quick overview of your spending
-- **Time Series**: Analyze spending patterns over time
-- **Category Breakdown**: See which categories consume most of your budget
-- **Range Analysis**: Compare spending across different time periods
-
-## 🔧 API Documentation
-
-### Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/expenses` | Retrieve all expenses |
-| `POST` | `/api/expenses` | Create a new expense |
-| `GET` | `/api/summary` | Get expense summary |
-| `GET` | `/api/reports/time-series` | Get time series data |
-| `GET` | `/api/reports/range-breakdown` | Get range breakdown |
-| `GET` | `/api/reports/available-years` | Get available years |
-
-### Example API Usage
-
-```javascript
-// Adding a new expense
-const response = await fetch('/api/expenses', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    amount: 500,
-    category: 'Food',
-    description: 'Lunch at restaurant',
-    date: '2025-08-31'
-  })
-});
+Example:
+```js
+export const CATEGORIES = [
+  { value: "basic", label: "Basic" },
+  { value: "bills", label: "Bills" },
+  { value: "food", label: "Food" },
+  { value: "fun/entertainment", label: "Fun/Entertainment" },
+  { value: "others", label: "Others" },
+  // Add your own
+  { value: "travel", label: "Travel" },
+];
 ```
 
-## 🎨 Customization
+After editing, restart the dev server if it’s running.
 
-### Styling
+## Customize users
 
-The application uses Tailwind CSS for styling. You can customize the theme by modifying:
+Edit the display list in `USERS` for UI and filtering, and update the allowed login usernames via `HASHED_USERNAMES` (bcrypt hashes).
 
-- `tailwind.config.js` - Main configuration
-- `app/globals.css` - Global styles
-- `components/ui/` - Individual component styles
+- Change display names in `USERS` for the UI.
+- To permit new usernames for login, generate their bcrypt hashes and add them to `HASHED_USERNAMES`.
 
-### 🏷️ Managing Categories and Users
-
-The application uses a centralized data management system for categories and users. All data is managed through the `lib/data.js` file.
-
-#### Adding New Categories
-
-To add new expense categories:
-
-1. Open `lib/data.js`
-2. Add your new category to the `CATEGORIES` array:
-   ```javascript
-   export const CATEGORIES = [
-     { value: "basic", label: "Basic" },
-     { value: "bills", label: "Bills" },
-     { value: "food", label: "Food" },
-     { value: "travel", label: "Travel" }, // ← Add new category here
-     // ... other categories
-   ];
-   ```
-3. Restart your development server
-4. The new category will automatically appear in all dropdowns
-
-#### Adding New Users
-
-To add new users to the system:
-
-1. Open `lib/data.js`
-2. Add your new user to the `USERS` array:
-   ```javascript
-   export const USERS = [
-     { value: "aaditya", label: "Aaditya" },
-     { value: "archana", label: "Archana" },
-     { value: "rajesh", label: "Rajesh" },
-     { value: "newuser", label: "New User" }, // ← Add new user here
-     // ... other users
-   ];
-   ```
-3. Restart your development server
-4. The new user will automatically appear in all user selection dropdowns
-
-#### Data Structure
-
-Each category and user object has:
-- `value`: Used for database storage and internal logic
-- `label`: Displayed in the user interface
-
-The system also provides utility functions:
-- `getCategoryLabel(value)` - Get display label for a category
-- `getUserLabel(value)` - Get display label for a user
-- `isValidCategory(value)` - Check if a category is valid
-- `isValidUser(value)` - Check if a user is valid
-
-## 📊 Project Structure
-
-```
-money-software/
-├── 📁 app/                  # Next.js app directory
-│   ├── 📄 page.js           # Main dashboard
-│   ├── 📄 layout.js         # Root layout
-│   ├── 📁 add/              # Add expense page
-│   ├── 📁 api/              # API routes
-│   │   ├── 📁 expenses/     # Expense endpoints
-│   │   ├── 📁 reports/      # Report endpoints
-│   │   └── 📁 summary/      # Summary endpoints
-│   └── 📁 summary/          # Summary page
-├── 📁 components/           # Reusable components
-│   └── 📁 ui/               # UI components
-├── 📁 lib/                  # Utility functions
-│   ├── 📄 data.js           # ⭐ Centralized categories and users configuration
-│   ├── 📄 db.js             # Database connection utilities
-│   ├── 📄 format.js         # Data formatting functions
-│   └── 📄 utils.js          # General utility functions
-├── 📁 models/               # Database models
-├── 📁 public/               # Static assets
-└── 📁 scripts/              # Build scripts
+Example UI list change:
+```js
+export const USERS = [
+  { value: "user1", label: "User 1" },
+  { value: "user2", label: "User 2" },
+  { value: "user3", label: "User 3" },
+  // Add your own
+  { value: "alex", label: "Alex" },
+];
 ```
 
-## 🤝 Contributing
+The login check does NOT read the `USERS` array; it checks `HASHED_USERNAMES`. Be sure to add the hash for any user you want to be able to login.
 
-Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+## Generate bcrypt hashes (usernames and password)
 
-### Development Workflow
+This repo includes a small generator script to produce bcrypt hashes.
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+Available npm scripts:
+- Generate a username hash
+  ```powershell
+  npm run hash:user -- <username>
+  ```
+- Generate a password hash
+  ```powershell
+  npm run hash:pass -- <password>
+  ```
+- Generate both at once
+  ```powershell
+  npm run hash:both -- <username> <password>
+  ```
 
-### Code Quality
+Where it comes from: `scripts/gen-hash.mjs`. The output prints JSON with one or more hashes. Copy the string(s) into `lib/data.js`:
 
-- Run `npm run lint` to check code quality
-- Run `npm run format` to format code
-- Ensure all tests pass before submitting
+- Add the username hash to `HASHED_USERNAMES` (array of strings)
+- Replace `HASHED_PASSWORD` with the new password hash (string)
 
-## 📄 License
+Example snippet in `lib/data.js`:
+```js
+export const HASHED_USERNAMES = [
+  // existing hashes...
+  "$2b$10$...yourNewUsernameHash..."
+];
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+export const HASHED_PASSWORD = "$2b$10$...yourNewPasswordHash...";
+```
 
-## 👨‍💻 Author
+Remember: bcrypt hashes are unique every time you generate them. That’s expected and still valid for login.
 
-**Aaditya Raj**
-- GitHub: [@sahay-aaditya-raj](https://github.com/sahay-aaditya-raj)
-- LinkedIn: [Connect with me](https://linkedin.com/in/aaditya-raj-sahay)
+## Where the token lives (server-side)
 
-## 🙏 Acknowledgments
+The app uses a constant token to authorize API requests. It’s defined on the server in `lib/auth.js`:
+- `APP_TOKEN`: compared against the `Authorization: Bearer <token>` header
+- The login endpoint returns this token after successful credential validation, and the client stores it in `localStorage`.
 
-- Built with [Next.js](https://nextjs.org/) - The React Framework for Production
-- UI Components from [shadcn/ui](https://ui.shadcn.com/)
-- Charts powered by [Recharts](https://recharts.org/)
-- Icons from [Lucide React](https://lucide.dev/)
-- Database powered by [MongoDB](https://www.mongodb.com/)
+For better security, consider moving `APP_TOKEN` (and even the hashes) to environment variables (see below).
 
----
+## Security tip: use environment variables for secrets
 
-<div align="center">
+For production, avoid hardcoding secrets in the repo. Put them in a `.env` file that you do NOT commit.
 
-**⭐ Star this repository if you find it helpful!**
+Recommended variables:
+- `APP_TOKEN` – the constant token used by the server to authorize requests
+- `HASHED_PASSWORD` – bcrypt hash of your chosen password
+- `HASHED_USERNAMES_JSON` – a JSON array string of bcrypt hashes for allowed usernames
 
-Made with ❤️ and ☕ by [Aaditya Raj](https://github.com/sahay-aaditya-raj)
+Example `.env.local` (not committed):
+```bash
+APP_TOKEN=replace-with-a-strong-random-token
+HASHED_PASSWORD=$2b$10$replace-with-your-password-hash
+HASHED_USERNAMES_JSON=["$2b$10$hashForUser1","$2b$10$hashForUser2"]
+```
 
-</div>
+Implementation approach:
+- In server files (`lib/auth.js` and `lib/data.js`), read from `process.env` first, and fall back to the hardcoded defaults.
+- Keep tokens server-only. Do NOT prefix secret env vars with `NEXT_PUBLIC_`.
+
+Example pattern to read env (conceptual):
+```js
+// lib/data.js
+export const HASHED_USERNAMES = (() => {
+  try {
+    if (process.env.HASHED_USERNAMES_JSON) {
+      return JSON.parse(process.env.HASHED_USERNAMES_JSON);
+    }
+  } catch {}
+  return [/* fallback hardcoded hashes */];
+})();
+
+export const HASHED_PASSWORD = process.env.HASHED_PASSWORD || "<fallback>";
+
+// lib/auth.js
+export const APP_TOKEN = process.env.APP_TOKEN || "<fallback>";
+```
+
+If you want, we can wire this up for you—just ask and we’ll switch the code to read from env with safe fallbacks.
+
+## Quick checklist when changing auth data
+
+- Add or update user display entries in `USERS` (UI only)
+- Generate bcrypt hash(es) for any login usernames to allow
+- Paste new username hash(es) into `HASHED_USERNAMES`
+- Generate a bcrypt hash for the chosen password and update `HASHED_PASSWORD`
+- Optionally move `APP_TOKEN`, `HASHED_PASSWORD`, and `HASHED_USERNAMES_JSON` to `.env.local`
+- Restart the server and test login
+
+## Troubleshooting
+
+- “My newly added user can’t login”
+  - Ensure you generated a bcrypt hash for the username and added it to `HASHED_USERNAMES`.
+  - Remember: `USERS` controls UI display; `HASHED_USERNAMES` controls login.
+- “My hash doesn’t match what I saw before”
+  - That’s normal—bcrypt hashes are unique due to salting. Use it anyway; `compare` will succeed.
+- “Still unauthorized after login”
+  - Make sure the client is storing the token, and API requests send `Authorization: Bearer <token>`.
+  - If you rotated `APP_TOKEN` server-side, you must login again to pick up the new token.
